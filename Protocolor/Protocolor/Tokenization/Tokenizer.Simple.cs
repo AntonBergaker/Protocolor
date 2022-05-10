@@ -36,6 +36,7 @@ public partial class Tokenizer {
     private class SimpleTokenizerInstance {
         private readonly Grid<RawColor> image;
         private readonly List<SimpleToken> output;
+        private readonly List<Error> errors;
 
         private bool startedRunning;
 
@@ -43,9 +44,10 @@ public partial class Tokenizer {
             this.image = image;
             startedRunning = false;
             output = new();
+            errors = new();
         }
 
-        public SimpleToken[] Run() {
+        public (SimpleToken[], Error[]) Run() {
             if (startedRunning == true) {
                 throw new InvalidOperationException("Instance has already been called once running");
             }
@@ -95,7 +97,7 @@ public partial class Tokenizer {
                 ParseLine(startLine, image.Height);
             }
 
-            return output.ToArray();
+            return (output.ToArray(), errors.ToArray());
         }
 
         private void ParseLine(int startY, int endY) {
@@ -124,7 +126,11 @@ public partial class Tokenizer {
                     Rectangle blockPosition = new(startColumn, startY, x, endY);
 
                     // If it's one wide, all gray and at the start, its probably an indentation
-                    if (blockPosition.Width == 1 && AreaOneColor(blockPosition, BlockLineColor) && hasPassedIndentation == false) {
+                    if (blockPosition.Width == 1 && AreaOneColorOrWhitespace(blockPosition, BlockLineColor) && hasPassedIndentation == false) {
+                        if (AreaOneColor(blockPosition, BlockLineColor) == false) {
+                            errors.Add(new Error(TokenizerErrors.InvalidBlockShape, blockPosition));
+                        }
+
                         output.Add(new SimpleToken(blockPosition, SimpleTokenType.Indentation));
                         startColumn = x + 1;
                         continue;
@@ -221,6 +227,18 @@ public partial class Tokenizer {
             for (int x = area.X0; x < area.X1; x++) {
                 for (int y = area.Y0; y < area.Y1; y++) {
                     if (image[x, y] != color) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private bool AreaOneColorOrWhitespace(Rectangle area, RawColor color) {
+            for (int x = area.X0; x < area.X1; x++) {
+                for (int y = area.Y0; y < area.Y1; y++) {
+                    if (image[x, y] != color && image[x, y] != WhiteSpace) {
                         return false;
                     }
                 }

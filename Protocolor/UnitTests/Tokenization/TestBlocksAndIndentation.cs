@@ -33,5 +33,31 @@ public class TestBlocksAndIndentation {
             new (TokenType.EndBlock, thirdRect), new (TokenType.EndBlock, secondRect), new (TokenType.EndBlock, firstRect)
         });
     }
-    
+
+    [Test]
+    public void ErrorGappedBlock() {
+        TokenizationUtil.AssertImageErrors("./gapped_indent.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+    }
+
+    [Test]
+    public void ErrorUnalignedBlock() {
+        TokenizationUtil.AssertImageErrors("./unaligned_block.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+    }
+
+    [Test]
+    public void BlocksWithoutSeparator() {
+        TokenizationUtil.AssertTokenizedImageEquals("./blocks_without_separator.png", new ExpectedToken[] {
+            TokenType.If, TokenType.Pipe, TokenType.Identifier, TokenType.Equals, TokenType.NumberLiteral, TokenType.Pipe, TokenType.NewLine,
+            TokenType.StartBlock, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.EndBlock, TokenType.NewLine,
+            TokenType.StartBlock, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.EndBlock,
+        });
+    }
+
+    [Test]
+    public void StartWithBlock() {
+        TokenizationUtil.AssertTokenizedImageEquals("./start_with_block.png", new ExpectedToken[] {
+            TokenType.StartBlock, TokenType.Identifier, TokenType.Assignment, TokenType.Identifier, TokenType.EndBlock,
+        });
+    }
+
 }

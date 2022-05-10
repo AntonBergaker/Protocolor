@@ -11,4 +11,9 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.1" />
   </ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="LinkedAst\" />
+	  <Folder Include="Linker\" />
+	</ItemGroup>
+
 </Project>

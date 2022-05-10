@@ -59,7 +59,19 @@ public partial class Tokenizer {
             errors = new();
         }
 
-        private List<(Token startToken, int startTokenIndex)> blockData = new();
+        private class BlockEntry {
+            public Token StartToken { get; }
+            public SimpleToken PreviousToken { get; set; }
+            public int StartTokenIndex { get; }
+
+            public BlockEntry(Token startToken, SimpleToken previousToken, int startTokenIndex) {
+                StartToken = startToken;
+                PreviousToken = previousToken;
+                StartTokenIndex = startTokenIndex;
+            }
+        }
+
+        private readonly List<BlockEntry> blockData = new();
         private SimpleReader reader = null!;
 
         public (Token[], Error[]) Run() {
@@ -69,7 +81,11 @@ public partial class Tokenizer {
             started = true;
 
             SimpleTokenizerInstance simpleTokenizer = new SimpleTokenizerInstance(image);
-            reader = new SimpleReader(simpleTokenizer.Run());
+
+            var (simpleTokens, simpleTokenErrors) = simpleTokenizer.Run();
+
+            errors.AddRange(simpleTokenErrors);
+            reader = new SimpleReader(simpleTokens);
 
             while (reader.HasNext()) {
                 var simpleToken = reader.Read();
@@ -82,12 +98,12 @@ public partial class Tokenizer {
                     case SimpleTokenType.Indentation:
                         // Can only happen if we start the file with an indent, so go back one and pretend we just read a newline
                         reader.Rewind();
-                        ParseIndentation(simpleToken);
+                        ParseIndentation(simpleToken, false);
                         break;
 
 
                     case SimpleTokenType.LineBreak:
-                        ParseIndentation(simpleToken);
+                        ParseIndentation(simpleToken, true);
                         break;
 
 
@@ -121,7 +137,7 @@ public partial class Tokenizer {
             return (output.ToArray(), errors.ToArray());
         }
 
-        private void ParseIndentation(SimpleToken simpleToken) {
+        private void ParseIndentation(SimpleToken simpleToken, bool cameFromNewline) {
             int indentation = 0;
             // Read indentations after a newline
 
@@ -131,12 +147,20 @@ public partial class Tokenizer {
                 SimpleToken indentToken = reader.Read();
 
                 if (indentation < blockData.Count) {
-                    (Token startToken, _) = blockData[indentation];
+                    var blockEntry = blockData[indentation];
 
-                    if (indentToken.Position.X0 != startToken.Position.X0 ||
-                        indentToken.Position.X1 != startToken.Position.X1) {
-                        // Todo: complain about misalignment
+                    var prePos = blockEntry.PreviousToken.Position;
+                    var startPos = blockEntry.StartToken.Position;
+
+
+
+                    // See that they start at the same X positions
+                    if (indentToken.Position.X0 != startPos.X0 ||
+                        indentToken.Position.X1 != startPos.X1) {
+                        AddError(TokenizerErrors.InvalidBlockShape, Rectangle.Union(indentToken.Position, startPos));
                     }
+
+                    blockEntry.PreviousToken = indentToken;
                 }
 
                 indentation++;
@@ -147,13 +171,14 @@ public partial class Tokenizer {
             // Add any closing blocks before the newline
             while (indentation < blockData.Count) {
 
-                var (startToken, index) = blockData.Last();
+                var blockEntry = blockData[indentation];
                 blockData.RemoveAt(blockData.Count-1);
 
+                var startPos = blockEntry.StartToken.Position;
 
                 // Expand up and down as far as possible to capture entire block line for visualization
-                int x = startToken.Position.X0;
-                int y0 = startToken.Position.Y0;
+                int x = startPos.X0;
+                int y0 = startPos.Y0;
 
                 while (y0 > 0) {
                     if (image[x, y0 - 1] != BlockLineColor) {
@@ -162,7 +187,7 @@ public partial class Tokenizer {
                     y0--;
                 }
 
-                int y1 = startToken.Position.Y1;
+                int y1 = startPos.Y1;
                 while (y1 < image.Height) {
                     if (image[x, y1] != BlockLineColor) {
                         break;
@@ -174,12 +199,14 @@ public partial class Tokenizer {
                 Rectangle closingRect = new(x, y0, x + 1, y1);
 
                 // Swap out the starting block with a new one with updated size information
-                output[index] = new Token(closingRect, TokenType.StartBlock);
+                output[blockEntry.StartTokenIndex] = new Token(closingRect, TokenType.StartBlock);
 
                 output.Add(new Token(closingRect, TokenType.EndBlock));
             }
 
-            output.Add(new Token(simpleToken.Position, TokenType.NewLine));
+            if (cameFromNewline) {
+                output.Add(new Token(simpleToken.Position, TokenType.NewLine));
+            }
 
             indentation = 0;
 
@@ -190,7 +217,7 @@ public partial class Tokenizer {
 
                 if (indentation > blockData.Count) {
                     Token startBlockToken = new Token(indentToken.Position, TokenType.StartBlock);
-                    blockData.Add((startBlockToken, output.Count));
+                    blockData.Add(new (startBlockToken, indentToken, output.Count));
 
                     output.Add(startBlockToken);
                 }
@@ -229,12 +256,12 @@ public partial class Tokenizer {
             }
 
             if (IdentifierFrame.TryParseFromRaw(position, image, out IdentifierFrame? frame) == false) {
-                errors.Add(new Error(TokenizerErrors.UnknownKeyword, position));
+                AddError(TokenizerErrors.UnknownKeyword, position);
                 return;
             }
 
             if (KeywordLibrary.TryGetOperator(frame, out TokenType operatorType) == false) {
-                errors.Add(new Error(TokenizerErrors.UnknownKeyword, position));
+                AddError(TokenizerErrors.UnknownKeyword, position);
                 return;
             }
 
@@ -296,11 +323,11 @@ public partial class Tokenizer {
             var rightSide = CountSide(pos.X1 - 1);
 
             if (leftSide.hasInvalid || rightSide.hasInvalid) {
-                errors.Add(new Error(TokenizerErrors.DeclarationSidesNonWhitespace, pos));
+                AddError(TokenizerErrors.DeclarationSidesNonWhitespace, pos);
             }
 
             if (leftSide.count != rightSide.count) {
-                errors.Add(new Error(TokenizerErrors.DeclarationUnevenError, pos));
+                AddError(TokenizerErrors.DeclarationUnevenError, pos);
             }
 
             int height = Math.Max(leftSide.count, rightSide.count);
@@ -315,7 +342,7 @@ public partial class Tokenizer {
                 rightToken = TokenType.ConstDeclarationR;
 
                 if (height < pos.Height) {
-                    errors.Add(new Error(TokenizerErrors.DeclarationUnclearError, pos));
+                    AddError(TokenizerErrors.DeclarationUnclearError, pos);
                 }
             }
 
@@ -326,6 +353,10 @@ public partial class Tokenizer {
             output.Add(new IdentifierToken(trimToContent, ParseFrame(trimToContent)));
             
             output.Add(new Token(pos, rightToken));
+        }
+
+        private void AddError(ErrorCode code, Rectangle position) {
+            errors.Add(new Error(code, position));
         }
 
         private Rectangle TrimToContent(Rectangle content) {
@@ -396,7 +427,7 @@ public partial class Tokenizer {
 
                     if (PaletteColor.TryFromRaw(image[x, y], out PaletteColor color) == false) {
                         if (complainedAboutPalette == false) {
-                            errors.Add(new Error(TokenizerErrors.ColorNotInPalette, position));
+                            AddError(TokenizerErrors.ColorNotInPalette, position);
                             complainedAboutPalette = true;
                         }
 

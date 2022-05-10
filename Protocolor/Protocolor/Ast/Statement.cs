@@ -1,3 +1,6 @@
-﻿namespace Protocolor.Ast;
-public class Statement : AstNode {
+﻿using Protocolor.Util;
+
+namespace Protocolor.Ast;
+public abstract class Statement : AstNode {
+    protected Statement(Rectangle position) : base(position) { }
 }

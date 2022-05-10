@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using NUnit.Framework;
 using Protocolor;
 using Protocolor.Tokenization;
@@ -25,9 +26,44 @@ public static class TokenizationUtil {
         }
 
         if (expectedTypes.Length != tokens.Length) {
-            Assert.Fail($"Token lengths are different. {expectedTypes.Length} != {tokens.Length}\n" +
-                        $"Expected: {string.Join(", ", expectedTypes.Select(x => x.Type.ToString()))}\n" +
-                        $"Actual: {string.Join(", ", tokens.Select(x => x.Type.ToString()))}");
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine($"Token lengths are different. {expectedTypes.Length} != {tokens.Length}");
+            sb.AppendLine("Expected:");
+
+            bool placeComma = false;
+            foreach (var token in expectedTypes) {
+                if (placeComma) {
+                    sb.Append(", ");
+                }
+                placeComma = true;
+
+                sb.Append(token.Type.ToString());
+
+                if (token.Type == TokenType.NewLine) {
+                    placeComma = false;
+                    sb.Append("\n");
+                }
+            }
+
+            sb.AppendLine("Actual:");
+            placeComma = false;
+            foreach (var token in tokens) {
+                if (placeComma) {
+                    sb.Append(", ");
+                }
+                placeComma = true;
+
+                sb.Append(token.Type.ToString());
+
+                if (token.Type == TokenType.NewLine) {
+                    placeComma = false;
+                    sb.Append("\n");
+                }
+            }
+
+
+            Assert.Fail(sb.ToString());
         }
 
         for (int i = 0; i < tokens.Length; i++) {
@@ -35,10 +71,15 @@ public static class TokenizationUtil {
         }
     }
 
-    public static void AssertImageErrors(string path, string errorCode, Rectangle? location = null, [CallerFilePath] string callerPath = "") {
+    public static void AssertImageErrors(string path, ErrorCode errorCode, Rectangle? location = null, [CallerFilePath] string callerPath = "") {
         (Token[] tokens, Error[] errors) = TokenizeImage(path, callerPath);
 
-        Error? error = errors.FirstOrDefault(x => x.Code.Identifier == errorCode);
+        if (errors.Length == 0) {
+            Assert.Fail("Compilation did not throw any errors.");
+            return;
+        }
+
+        Error? error = errors.FirstOrDefault(x => x.Code.Identifier == errorCode.Identifier);
         if (error == null) {
             Assert.Fail("Compilation did not throw the provided error.");
             return;

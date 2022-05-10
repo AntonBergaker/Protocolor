@@ -37,11 +37,11 @@ class TestVariableDeclarations {
 
     [Test]
     public void ErrorUnclearMutability() {
-        TokenizationUtil.AssertImageErrors("./error_unclear_mutability.png", Tokenizer.TokenizerErrors.DeclarationUnclearError.Identifier);
+        TokenizationUtil.AssertImageErrors("./error_unclear_mutability.png", Tokenizer.TokenizerErrors.DeclarationUnclearError);
     }
 
     [Test]
     public void ErrorUnevenSidesMutability() {
-        TokenizationUtil.AssertImageErrors("./error_uneven_sides.png", Tokenizer.TokenizerErrors.DeclarationUnevenError.Identifier);
+        TokenizationUtil.AssertImageErrors("./error_uneven_sides.png", Tokenizer.TokenizerErrors.DeclarationUnevenError);
     }
 }
