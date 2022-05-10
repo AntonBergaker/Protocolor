@@ -33,6 +33,18 @@ public partial class Tokenizer {
             ErrorSeverity.Error,
             "Literal is not properly vertically aligned."
         );
+
+        public static readonly ErrorCode InvalidBlockShape = new ErrorCode(
+            "tokenizer_invalid_block_shape",
+            ErrorSeverity.Error,
+            "Block is not properly aligned or filled in. Block must cover the entirety of the lines it encompasses and connect to the rest of the block."
+        );
+
+        public static readonly ErrorCode ColorNotInPalette = new ErrorCode(
+            "tokenizer_color_not_in_palette",
+            ErrorSeverity.Error,
+            "The provided color is not part of the paint palette."
+        );
     }
 
     private class TokenizerInstance {
@@ -40,13 +52,15 @@ public partial class Tokenizer {
         private readonly List<Token> output;
         private readonly List<Error> errors;
         private bool started;
-        private int i;
 
         public TokenizerInstance(Grid<RawColor> image) {
             this.image = image;
             output = new();
             errors = new();
         }
+
+        private List<(Token startToken, int startTokenIndex)> blockData = new();
+        private SimpleReader reader = null!;
 
         public (Token[], Error[]) Run() {
             if (started) {
@@ -55,38 +69,40 @@ public partial class Tokenizer {
             started = true;
 
             SimpleTokenizerInstance simpleTokenizer = new SimpleTokenizerInstance(image);
-            var simpleTokens = simpleTokenizer.Run();
+            reader = new SimpleReader(simpleTokenizer.Run());
 
-            for (; i < simpleTokens.Length; i++) {
-                var simpleToken = simpleTokens[i];
+            while (reader.HasNext()) {
+                var simpleToken = reader.Read();
 
                 switch (simpleToken.Type) {
-                    case SimpleTokenType.Identifier:
+                    case SimpleTokenType.Identifier: 
                         ParseIdentifier(simpleToken);
                         break;
 
-                    case SimpleTokenType.LineBreak:
-                        output.Add(new Token(simpleToken.Position, TokenType.NewLine));
+                    case SimpleTokenType.Indentation:
+                        // Can only happen if we start the file with an indent, so go back one and pretend we just read a newline
+                        reader.Rewind();
+                        ParseIndentation(simpleToken);
                         break;
 
-                    case SimpleTokenType.Keyword: 
+
+                    case SimpleTokenType.LineBreak:
+                        ParseIndentation(simpleToken);
+                        break;
+
+
+                    case SimpleTokenType.Keyword:
                         ParseKeyword(simpleToken);
                         break;
+
 
                     case SimpleTokenType.Number:
                     case SimpleTokenType.String: 
                         SimpleToken endToken = simpleToken;
 
-                        // Find last number token
-                        int j = i;
-                        for (; j < simpleTokens.Length - 1; j++) {
-                            if (simpleTokens[j + 1].Type != simpleToken.Type) {
-                                break;
-                            }
-                            endToken = simpleTokens[j];
+                        while (reader.Peek().Type == simpleToken.Type) {
+                            endToken = reader.Read();
                         }
-
-                        i = j;
 
                         TokenType type = simpleToken.Type == SimpleTokenType.Number
                             ? TokenType.NumberLiteral
@@ -94,7 +110,7 @@ public partial class Tokenizer {
 
                         output.Add(new Token(Rectangle.Union(simpleToken.Position, endToken.Position), type));
                         break;
-
+                    
 
                     default:
                         // todo error
@@ -103,6 +119,85 @@ public partial class Tokenizer {
             }
 
             return (output.ToArray(), errors.ToArray());
+        }
+
+        private void ParseIndentation(SimpleToken simpleToken) {
+            int indentation = 0;
+            // Read indentations after a newline
+
+            reader.PushState();
+
+            while (reader.Peek().Type == SimpleTokenType.Indentation) {
+                SimpleToken indentToken = reader.Read();
+
+                if (indentation < blockData.Count) {
+                    (Token startToken, _) = blockData[indentation];
+
+                    if (indentToken.Position.X0 != startToken.Position.X0 ||
+                        indentToken.Position.X1 != startToken.Position.X1) {
+                        // Todo: complain about misalignment
+                    }
+                }
+
+                indentation++;
+            }
+
+            reader.PopState();
+
+            // Add any closing blocks before the newline
+            while (indentation < blockData.Count) {
+
+                var (startToken, index) = blockData.Last();
+                blockData.RemoveAt(blockData.Count-1);
+
+
+                // Expand up and down as far as possible to capture entire block line for visualization
+                int x = startToken.Position.X0;
+                int y0 = startToken.Position.Y0;
+
+                while (y0 > 0) {
+                    if (image[x, y0 - 1] != BlockLineColor) {
+                        break;
+                    }
+                    y0--;
+                }
+
+                int y1 = startToken.Position.Y1;
+                while (y1 < image.Height) {
+                    if (image[x, y1] != BlockLineColor) {
+                        break;
+                    }
+
+                    y1++;
+                }
+
+                Rectangle closingRect = new(x, y0, x + 1, y1);
+
+                // Swap out the starting block with a new one with updated size information
+                output[index] = new Token(closingRect, TokenType.StartBlock);
+
+                output.Add(new Token(closingRect, TokenType.EndBlock));
+            }
+
+            output.Add(new Token(simpleToken.Position, TokenType.NewLine));
+
+            indentation = 0;
+
+            // Add any opening blocks after the newline
+            while (reader.Peek().Type == SimpleTokenType.Indentation) {
+                SimpleToken indentToken = reader.Read();
+                indentation++;
+
+                if (indentation > blockData.Count) {
+                    Token startBlockToken = new Token(indentToken.Position, TokenType.StartBlock);
+                    blockData.Add((startBlockToken, output.Count));
+
+                    output.Add(startBlockToken);
+                }
+
+            }
+
+            return;
         }
 
         private void ParseKeyword(SimpleToken simpleToken) {
@@ -227,7 +322,9 @@ public partial class Tokenizer {
             Rectangle trimToContent = pos;
             trimToContent = TrimToContent(new Rectangle(trimToContent.X0+1, trimToContent.Y0, trimToContent.X1-1, trimToContent.Y1-1));
             output.Add(new Token(pos, leftToken));
-            output.Add(new Token(trimToContent, TokenType.Identifier));
+            
+            output.Add(new IdentifierToken(trimToContent, ParseFrame(trimToContent)));
+            
             output.Add(new Token(pos, rightToken));
         }
 
@@ -257,7 +354,7 @@ public partial class Tokenizer {
 
             // Trim right
             for (; x1 > x0; x1--) {
-                if (AreaEmpty(new(x0 - 1, y0, x0, y1)) == false) {
+                if (AreaEmpty(new(x1 - 1, y0, x1, y1)) == false) {
                     break;
                 }
             }
@@ -288,7 +385,32 @@ public partial class Tokenizer {
             }
 
             return true;
-        } 
+        }
+
+        private IdentifierFrame ParseFrame(Rectangle position) {
+            Grid<PaletteColor> colors = new Grid<PaletteColor>(position.Width, position.Height);
+            bool complainedAboutPalette = false;
+
+            for (int x = position.X0; x < position.X1; x++) {
+                for (int y = position.Y0; y < position.Y1; y++) {
+
+                    if (PaletteColor.TryFromRaw(image[x, y], out PaletteColor color) == false) {
+                        if (complainedAboutPalette == false) {
+                            errors.Add(new Error(TokenizerErrors.ColorNotInPalette, position));
+                            complainedAboutPalette = true;
+                        }
+
+                        // Default to light gray I guess.
+                        // TODO make it pick the closest color
+                        color = PaletteColor.LightGray;
+                    }
+
+                    colors[x - position.X0, y - position.Y0] = color;
+                }
+            }
+
+            return new IdentifierFrame(colors);
+        }
     }
     
     public (Token[], Error[]) Tokenize(Grid<RawColor> image) {
@@ -296,5 +418,4 @@ public partial class Tokenizer {
         return instance.Run();
 
     }
-    
 }

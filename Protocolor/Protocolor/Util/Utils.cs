@@ -16,6 +16,7 @@ public static class Utils {
         { 'C', PaletteColor.Cyan },
         { 'B', PaletteColor.Blue },
         { 'P', PaletteColor.Purple },
+        
         { ' ', PaletteColor.White },
         { 'w', PaletteColor.LightGray }, //light white, clearly
         { 'S', PaletteColor.Brown }, // For sepia

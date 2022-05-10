@@ -3,14 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocolor", "Protocolor\Protocolor.csproj", "{5572591F-1F32-4F02-8588-982222E47065}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Protocolor", "Protocolor\Protocolor.csproj", "{5572591F-1F32-4F02-8588-982222E47065}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{7DCC2CD6-545C-4537-AA44-F7596C833118}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\UnitTests.csproj", "{7DCC2CD6-545C-4537-AA44-F7596C833118}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C3248799-917A-4CAA-A062-30720F318D2A}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Protocolor.Interpreter", "Protocolor.Interpreter\Protocolor.Interpreter.csproj", "{FEBA5483-0527-42F2-857B-95484B2D80DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{7DCC2CD6-545C-4537-AA44-F7596C833118}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7DCC2CD6-545C-4537-AA44-F7596C833118}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7DCC2CD6-545C-4537-AA44-F7596C833118}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEBA5483-0527-42F2-857B-95484B2D80DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEBA5483-0527-42F2-857B-95484B2D80DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEBA5483-0527-42F2-857B-95484B2D80DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEBA5483-0527-42F2-857B-95484B2D80DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

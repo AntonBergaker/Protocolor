@@ -4,6 +4,7 @@ namespace Protocolor.Tokenization;
 
 public partial class Tokenizer {
     private static readonly RawColor WhiteSpace = PaletteColor.White.Color;
+    private static readonly RawColor BlockLineColor = PaletteColor.LightGray.Color;
     private static readonly RawColor StringLiteralColor = PaletteColor.Red.Color;
     private static readonly RawColor OperatorColor = PaletteColor.Black.Color;
     private static readonly RawColor NumberLiteralColor = PaletteColor.Cyan.Color;
@@ -14,6 +15,7 @@ public partial class Tokenizer {
         Number,
         Identifier,
         LineBreak,
+        Indentation,
         EndOfFile
     }
 
@@ -24,6 +26,10 @@ public partial class Tokenizer {
         public SimpleToken(Rectangle position, SimpleTokenType type) {
             Position = position;
             Type = type;
+        }
+
+        public override string ToString() {
+            return Type.ToString() + " " + Position.ToString();
         }
     }
 
@@ -48,7 +54,28 @@ public partial class Tokenizer {
             int startLine = 0;
             for (int y = 0; y < image.Height; y++) {
 
-                bool lineEmpty = LineEmpty(new(0, y), image.Width);
+                bool lineEmpty = true;
+                
+                // Ignore block lines, which are one wide gray lines.
+                int blockLineWidth = 0;
+
+                for (int x = 0; x < image.Width; x++) {
+                    if (image[x, y] == WhiteSpace) {
+                        blockLineWidth = 0;
+                        continue;
+                    }
+
+                    if (image[x, y] == BlockLineColor) {
+                        blockLineWidth++;
+
+                        if (blockLineWidth <= 1) {
+                            continue;
+                        }
+                    }
+
+                    lineEmpty = false;
+                    break;
+                }
 
                 // A full line of whitespace at the start, can be skipped
                 if (lineEmpty && startLine == y) {
@@ -74,6 +101,8 @@ public partial class Tokenizer {
         private void ParseLine(int startY, int endY) {
             int startColumn = 0;
 
+            bool hasPassedIndentation = false;
+
             for (int x = 0; x < image.Width; x++) {
                 bool columnEmpty = true;
 
@@ -92,40 +121,49 @@ public partial class Tokenizer {
 
                 // If we have an empty line, send it in for parsing
                 if (columnEmpty) {
-                    ParseBlock(new(startColumn, startY), new (x, endY));
+                    Rectangle blockPosition = new(startColumn, startY, x, endY);
+
+                    // If it's one wide, all gray and at the start, its probably an indentation
+                    if (blockPosition.Width == 1 && AreaOneColor(blockPosition, BlockLineColor) && hasPassedIndentation == false) {
+                        output.Add(new SimpleToken(blockPosition, SimpleTokenType.Indentation));
+                        startColumn = x + 1;
+                        continue;
+                    }
+
+                    hasPassedIndentation = true;
+                    ParseBlock(blockPosition);
                     startColumn = x + 1;
                     continue;
                 }
             }
 
             if (startColumn < image.Width) {
-                ParseBlock(new(startColumn, startY), new(image.Width, endY));
+                ParseBlock(new(startColumn, startY, image.Width, endY));
             }
 
             // Add a newline token at the end of every line
             output.Add(new SimpleToken(new Rectangle(image.Width-1, startY, image.Width, endY), SimpleTokenType.LineBreak));
         }
 
-        private void ParseBlock(Point start, Point end) {
-            int startY = start.Y;
-            int endY = end.Y;
+        private void ParseBlock(Rectangle position) {
+            var (x0, y0, x1, y1) = position;
 
             // X and Y are already guaranteed to be trimmed, but Y can maybe still be trimmed
-            for (int y = startY; y < endY; y++) {
-                bool lineEmpty = LineEmpty(new(start.X, y), end.X);
+            for (int y = y0; y < y1; y++) {
+                bool lineEmpty = LineEmpty(new(x0, y), x1);
                 // Line is empty, increase startY
                 if (lineEmpty) {
-                    startY = y + 1;
+                    y0 = y + 1;
                 } else {
                     break;
                 }
             }
 
-            for (int y = endY - 1; y > startY; y--) {
-                bool lineEmpty = LineEmpty(new(start.X, y), end.X);
+            for (int y = y1 - 1; y > y0; y--) {
+                bool lineEmpty = LineEmpty(new(x0, y), x1);
                 // Line is empty, decrease endY
                 if (lineEmpty) {
-                    endY = y;
+                    y1 = y;
                 } else {
                     break;
                 }
@@ -135,8 +173,8 @@ public partial class Tokenizer {
             bool isStringLiteral = true;
             bool isNumberLiteral = true;
 
-            for (int x = start.X; x < end.X; x++) {
-                for (int y = startY; y < endY; y++) {
+            for (int x = x0; x < x1; x++) {
+                for (int y = y0; y < y1; y++) {
                     RawColor color = image[x, y];
                     if (color == WhiteSpace) {
                         continue;
@@ -163,7 +201,7 @@ public partial class Tokenizer {
                 type = SimpleTokenType.String;
             }
 
-            output.Add(new SimpleToken(new Rectangle(start.X, startY, end.X, endY), type));
+            output.Add(new SimpleToken(new Rectangle(x0, y0, x1, y1), type));
         }
 
         private bool LineEmpty(Point start, int endX) {
@@ -177,6 +215,18 @@ public partial class Tokenizer {
             }
 
             return lineEmpty;
+        }
+
+        private bool AreaOneColor(Rectangle area, RawColor color) {
+            for (int x = area.X0; x < area.X1; x++) {
+                for (int y = area.Y0; y < area.Y1; y++) {
+                    if (image[x, y] != color) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
     }
 }
