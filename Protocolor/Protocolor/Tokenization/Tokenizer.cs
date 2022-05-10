@@ -152,6 +152,11 @@ public partial class Tokenizer {
                     var prePos = blockEntry.PreviousToken.Position;
                     var startPos = blockEntry.StartToken.Position;
 
+                    // If the previous block and this block are not connected, they are separate blocks and we must close this block
+                    if (AreaEmpty(new Rectangle(prePos.X0, prePos.Y0, indentToken.Position.X0, prePos.Y0))) {
+
+                        continue;
+                    }
 
 
                     // See that they start at the same X positions
@@ -171,7 +176,7 @@ public partial class Tokenizer {
             // Add any closing blocks before the newline
             while (indentation < blockData.Count) {
 
-                var blockEntry = blockData[indentation];
+                var blockEntry = blockData[^1];
                 blockData.RemoveAt(blockData.Count-1);
 
                 var startPos = blockEntry.StartToken.Position;
@@ -188,15 +193,15 @@ public partial class Tokenizer {
                 }
 
                 int y1 = startPos.Y1;
-                while (y1 < image.Height) {
-                    if (image[x, y1] != BlockLineColor) {
+                while (y1 < image.Height-1) {
+                    if (image[x, y1 + 1] != BlockLineColor) {
                         break;
                     }
 
                     y1++;
                 }
 
-                Rectangle closingRect = new(x, y0, x + 1, y1);
+                Rectangle closingRect = new(x, y0, x, y1);
 
                 // Swap out the starting block with a new one with updated size information
                 output[blockEntry.StartTokenIndex] = new Token(closingRect, TokenType.StartBlock);
@@ -239,16 +244,16 @@ public partial class Tokenizer {
             if (position.Width == 2 && position.Height >= 3) {
                 var (x0, y0, x1, y1) = position;
                 if (
-                    AreaOneColor(new Rectangle(x0, y0, x0+1, y1), PaletteColor.Black) &&
-                    AreaEmpty(new Rectangle(x0 + 1, y0+1, x0, y1-1))
+                    AreaOneColor(new Rectangle(x0, y0, x0, y1), PaletteColor.Black) &&
+                    AreaEmpty(new Rectangle(x0 + 1, y0+1, x0 + 1, y1-1))
                     ) {
                     output.Add(new Token(position, TokenType.BracketL));
                     return;
                 }
 
                 if (
-                    AreaOneColor(new Rectangle(x1-1, y0, x1, y1), PaletteColor.Black) &&
-                    AreaEmpty(new Rectangle(x1 - 1, y0 + 1, x1, y1 - 1))
+                    AreaOneColor(new Rectangle(x1, y0, x1, y1), PaletteColor.Black) &&
+                    AreaEmpty(new Rectangle(x1 - 1, y0 + 1, x1 - 1, y1 - 1))
                 ) {
                     output.Add(new Token(position, TokenType.BracketR));
                     return;
@@ -274,9 +279,8 @@ public partial class Tokenizer {
             Rectangle pos = simpleToken.Position;
 
             // Check if the bottom is a variable initializer
-            int bottomY = pos.Y1 - 1;
-            for (int x = pos.X0; x < pos.X1; x++) {
-                if (image[x, bottomY] != OperatorColor) {
+            for (int x = pos.X0; x <= pos.X1; x++) {
+                if (image[x, pos.Y1] != OperatorColor) {
                     isInitializer = false;
                     break;
                 }
@@ -284,8 +288,8 @@ public partial class Tokenizer {
 
             // Check if there's at least two nubs
             if (isInitializer) {
-                Point leftPoint = new(pos.X0, pos.Y1 - 2);
-                Point rightPoint = new(pos.X1 - 1, pos.Y1 - 2);
+                Point leftPoint = new(pos.X0, pos.Y1 - 1);
+                Point rightPoint = new(pos.X1, pos.Y1 - 1);
 
                 if ((pos.Contains(leftPoint) && image[leftPoint] == OperatorColor && 
                      pos.Contains(rightPoint) && image[rightPoint] == OperatorColor) == false) {
@@ -302,7 +306,7 @@ public partial class Tokenizer {
                 int count = 0;
                 bool sawWhitespace = false;
                 bool sawInvalidColor = false;
-                for (int y = pos.Y1-1; y >= pos.Y0; y--) {
+                for (int y = pos.Y1; y >= pos.Y0; y--) {
                     if (image[x, y] == OperatorColor) {
                         if (sawWhitespace == false) {
                             count++;
@@ -320,7 +324,7 @@ public partial class Tokenizer {
 
             // Count the length of the sides, and that any extra space is whitespace
             var leftSide = CountSide(pos.X0);
-            var rightSide = CountSide(pos.X1 - 1);
+            var rightSide = CountSide(pos.X1);
 
             if (leftSide.hasInvalid || rightSide.hasInvalid) {
                 AddError(TokenizerErrors.DeclarationSidesNonWhitespace, pos);
@@ -364,28 +368,28 @@ public partial class Tokenizer {
 
             // Trim top
             for (; y0 < y1; y0++) {
-                if (AreaEmpty(new(x0, y0, x1, y0+1)) == false) {
+                if (AreaEmpty(new(x0, y0, x1, y0)) == false) {
                     break;
                 }
             }
             
             // Trim bot
             for (; y1 > y0; y1--) {
-                if (AreaEmpty(new(x0, y1-1, x1, y1)) == false) {
+                if (AreaEmpty(new(x0, y1, x1, y1)) == false) {
                     break;
                 }
             }
 
             // Trim left
             for (; x0 < x1; x0++) {
-                if (AreaEmpty(new(x0, y0, x0 + 1, y1)) == false) {
+                if (AreaEmpty(new(x0, y0, x0, y1)) == false) {
                     break;
                 }
             }
 
             // Trim right
             for (; x1 > x0; x1--) {
-                if (AreaEmpty(new(x1 - 1, y0, x1, y1)) == false) {
+                if (AreaEmpty(new(x1, y0, x1, y1)) == false) {
                     break;
                 }
             }
@@ -394,8 +398,8 @@ public partial class Tokenizer {
         }
 
         private bool AreaEmpty(Rectangle area) {
-            for (int x = area.X0; x < area.X1; x++) {
-                for (int y = area.Y0; y < area.Y1; y++) {
+            for (int x = area.X0; x <= area.X1; x++) {
+                for (int y = area.Y0; y <= area.Y1; y++) {
                     if (image[x, y] != WhiteSpace) {
                         return false;
                     }
@@ -407,8 +411,8 @@ public partial class Tokenizer {
 
         private bool AreaOneColor(Rectangle area, PaletteColor color) {
             RawColor rawColor = color.Color;
-            for (int x = area.X0; x < area.X1; x++) {
-                for (int y = area.Y0; y < area.Y1; y++) {
+            for (int x = area.X0; x <= area.X1; x++) {
+                for (int y = area.Y0; y <= area.Y1; y++) {
                     if (image[x, y] != rawColor) {
                         return false;
                     }
@@ -422,8 +426,8 @@ public partial class Tokenizer {
             Grid<PaletteColor> colors = new Grid<PaletteColor>(position.Width, position.Height);
             bool complainedAboutPalette = false;
 
-            for (int x = position.X0; x < position.X1; x++) {
-                for (int y = position.Y0; y < position.Y1; y++) {
+            for (int x = position.X0; x <= position.X1; x++) {
+                for (int y = position.Y0; y <= position.Y1; y++) {
 
                     if (PaletteColor.TryFromRaw(image[x, y], out PaletteColor color) == false) {
                         if (complainedAboutPalette == false) {

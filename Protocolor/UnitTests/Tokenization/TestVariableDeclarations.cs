@@ -17,19 +17,19 @@ class TestVariableDeclarations {
     [Test]
     public void ValidDeclarationEdgecases() {
         TokenizationUtil.AssertTokenizedImageEquals("./valid_edgecases.png", new ExpectedToken[] {
-            new(TokenType.VarDeclarationL, new(1, 1, 7, 4)), 
+            new(TokenType.VarDeclarationL, new(1, 1, 6, 3)), 
             new(Utils.StringToFrame(
                 "pbbp",
                 "CbbC"
-                ), new (2, 1, 6, 3)), 
+                ), new (2, 1, 5, 2)), 
             
-            new(TokenType.VarDeclarationR, new(1, 1, 7, 4)), 
+            new(TokenType.VarDeclarationR, new(1, 1, 6, 3)), 
             TokenType.Assignment, TokenType.StringLiteral, TokenType.NewLine,
 
 
-            new(TokenType.ConstDeclarationL, new(0, 6, 9, 18)), 
-            new(Utils.StringToFrame("g"), new (2, 11, 3, 12)), 
-            new(TokenType.ConstDeclarationR, new(0, 6, 9, 18)), 
+            new(TokenType.ConstDeclarationL, new(0, 6, 8, 17)), 
+            new(Utils.StringToFrame("g"), new (2, 11, 2, 11)), 
+            new(TokenType.ConstDeclarationR, new(0, 6, 8, 17)), 
             
             TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
         });

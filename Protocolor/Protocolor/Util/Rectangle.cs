@@ -9,8 +9,8 @@ public readonly struct Rectangle {
     public int X1 => Point1.X;
     public int Y1 => Point1.Y;
     
-    public int Width => X1 - X0;
-    public int Height => Y1 - Y0;
+    public int Width => X1 - X0 + 1;
+    public int Height => Y1 - Y0 + 1;
 
 
     public Rectangle(Point point0, Point point1) {
@@ -39,7 +39,7 @@ public readonly struct Rectangle {
     }
 
     public bool Contains(Point point) {
-        return point.X >= X0 && point.X < X1 && point.Y >= Y0 && point.Y < Y1;
+        return point.X >= X0 && point.X <= X1 && point.Y >= Y0 && point.Y <= Y1;
     }
 
     public override string ToString() {

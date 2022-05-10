@@ -87,14 +87,14 @@ public partial class Tokenizer {
 
                 // If we have an empty line with data since last, parse it
                 if (lineEmpty) {
-                    ParseLine(startLine, y);
+                    ParseLine(startLine, y-1);
                     startLine = y + 1;
                     continue;
                 }
             }
 
             if (startLine < image.Height) {
-                ParseLine(startLine, image.Height);
+                ParseLine(startLine, image.Height-1);
             }
 
             return (output.ToArray(), errors.ToArray());
@@ -108,7 +108,7 @@ public partial class Tokenizer {
             for (int x = 0; x < image.Width; x++) {
                 bool columnEmpty = true;
 
-                for (int y = startY; y < endY; y++) {
+                for (int y = startY; y <= endY; y++) {
                     if (image[x, y] != WhiteSpace) {
                         columnEmpty = false;
                         break;
@@ -123,7 +123,7 @@ public partial class Tokenizer {
 
                 // If we have an empty line, send it in for parsing
                 if (columnEmpty) {
-                    Rectangle blockPosition = new(startColumn, startY, x, endY);
+                    Rectangle blockPosition = new(startColumn, startY, x-1, endY);
 
                     // If it's one wide, all gray and at the start, its probably an indentation
                     if (blockPosition.Width == 1 && AreaOneColorOrWhitespace(blockPosition, BlockLineColor) && hasPassedIndentation == false) {
@@ -144,19 +144,19 @@ public partial class Tokenizer {
             }
 
             if (startColumn < image.Width) {
-                ParseBlock(new(startColumn, startY, image.Width, endY));
+                ParseBlock(new(startColumn, startY, image.Width-1, endY));
             }
 
             // Add a newline token at the end of every line
-            output.Add(new SimpleToken(new Rectangle(image.Width-1, startY, image.Width, endY), SimpleTokenType.LineBreak));
+            output.Add(new SimpleToken(new Rectangle(image.Width-1, startY, image.Width-1, endY), SimpleTokenType.LineBreak));
         }
 
         private void ParseBlock(Rectangle position) {
             var (x0, y0, x1, y1) = position;
 
             // X and Y are already guaranteed to be trimmed, but Y can maybe still be trimmed
-            for (int y = y0; y < y1; y++) {
-                bool lineEmpty = LineEmpty(new(x0, y), x1);
+            for (int y = y0; y <= y1; y++) {
+                bool lineEmpty = AreaEmpty(new(x0, y, x1, y));
                 // Line is empty, increase startY
                 if (lineEmpty) {
                     y0 = y + 1;
@@ -165,11 +165,11 @@ public partial class Tokenizer {
                 }
             }
 
-            for (int y = y1 - 1; y > y0; y--) {
-                bool lineEmpty = LineEmpty(new(x0, y), x1);
+            for (int y = y1; y >= y0; y--) {
+                bool lineEmpty = AreaEmpty(new(x0, y, x1, y));
                 // Line is empty, decrease endY
                 if (lineEmpty) {
-                    y1 = y;
+                    y1 = y - 1;
                 } else {
                     break;
                 }
@@ -179,8 +179,8 @@ public partial class Tokenizer {
             bool isStringLiteral = true;
             bool isNumberLiteral = true;
 
-            for (int x = x0; x < x1; x++) {
-                for (int y = y0; y < y1; y++) {
+            for (int x = x0; x <= x1; x++) {
+                for (int y = y0; y <= y1; y++) {
                     RawColor color = image[x, y];
                     if (color == WhiteSpace) {
                         continue;
@@ -210,22 +210,13 @@ public partial class Tokenizer {
             output.Add(new SimpleToken(new Rectangle(x0, y0, x1, y1), type));
         }
 
-        private bool LineEmpty(Point start, int endX) {
-            bool lineEmpty = true;
-
-            for (int x = start.X; x < endX; x++) {
-                if (image[x, start.Y] != WhiteSpace) {
-                    lineEmpty = false;
-                    break;
-                }
-            }
-
-            return lineEmpty;
+        private bool AreaEmpty(Rectangle position) {
+            return AreaOneColor(position, WhiteSpace);
         }
 
         private bool AreaOneColor(Rectangle area, RawColor color) {
-            for (int x = area.X0; x < area.X1; x++) {
-                for (int y = area.Y0; y < area.Y1; y++) {
+            for (int x = area.X0; x <= area.X1; x++) {
+                for (int y = area.Y0; y <= area.Y1; y++) {
                     if (image[x, y] != color) {
                         return false;
                     }
@@ -236,8 +227,8 @@ public partial class Tokenizer {
         }
 
         private bool AreaOneColorOrWhitespace(Rectangle area, RawColor color) {
-            for (int x = area.X0; x < area.X1; x++) {
-                for (int y = area.Y0; y < area.Y1; y++) {
+            for (int x = area.X0; x <= area.X1; x++) {
+                for (int y = area.Y0; y <= area.Y1; y++) {
                     if (image[x, y] != color && image[x, y] != WhiteSpace) {
                         return false;
                     }

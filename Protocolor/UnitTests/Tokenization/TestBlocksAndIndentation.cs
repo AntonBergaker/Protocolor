@@ -20,9 +20,9 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void NestedBlocks() {
-        Rectangle firstRect = new(1, 6, 2, 20);
-        Rectangle secondRect = new(3, 6, 4, 20);
-        Rectangle thirdRect = new(5, 13, 6, 20);
+        Rectangle firstRect = new(1, 6, 1, 19);
+        Rectangle secondRect = new(3, 6, 3, 19);
+        Rectangle thirdRect = new(5, 13, 5, 19);
 
         TokenizationUtil.AssertTokenizedImageEquals("./nested_blocks.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, TokenType.Identifier, TokenType.NewLine,

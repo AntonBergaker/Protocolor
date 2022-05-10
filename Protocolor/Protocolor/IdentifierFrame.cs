@@ -12,8 +12,8 @@ public class IdentifierFrame : IEquatable<IdentifierFrame> {
     public static bool TryParseFromRaw(Rectangle position, Grid<RawColor> image, [NotNullWhen(true)] out IdentifierFrame? identifier) {
         Grid<PaletteColor> colors = new Grid<PaletteColor>(position.Width, position.Height);
 
-        for (int x = position.X0; x < position.X1; x++) {
-            for (int y = position.Y0; y < position.Y1; y++) {
+        for (int x = position.X0; x <= position.X1; x++) {
+            for (int y = position.Y0; y <= position.Y1; y++) {
 
                 if (PaletteColor.TryFromRaw(image[x, y], out PaletteColor color) == false) {
                     identifier = null;
