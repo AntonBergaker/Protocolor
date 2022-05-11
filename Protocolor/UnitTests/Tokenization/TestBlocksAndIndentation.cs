@@ -54,6 +54,11 @@ public class TestBlocksAndIndentation {
     }
 
     [Test]
+    public void SplitOnWrongBlock() {
+        TokenizationUtil.AssertImageErrors("./split_on_outer_block.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+    }
+
+    [Test]
     public void StartWithBlock() {
         TokenizationUtil.AssertTokenizedImageEquals("./start_with_block.png", new ExpectedToken[] {
             TokenType.StartBlock, TokenType.Identifier, TokenType.Assignment, TokenType.Identifier, TokenType.EndBlock,

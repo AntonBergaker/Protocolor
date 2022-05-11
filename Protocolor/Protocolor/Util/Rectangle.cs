@@ -28,6 +28,18 @@ public readonly struct Rectangle {
 
     public Rectangle(int x0, int y0, int x1, int y1) : this(new Point(x0, y0), new Point(x1, y1)) { }
 
+    public static Rectangle FromUnorderedPositions(int x0, int y0, int x1, int y1) {
+        if (x1 < x0) {
+            (x1, x0) = (x0, x1);
+        }
+
+        if (y1 < y0) {
+            (y1, y0) = (y0, y1);
+        }
+
+        return new Rectangle(x0, y0, x1, y1);
+    }
+
     public static Rectangle Union(Rectangle a, Rectangle b) {
         int x0 = Math.Min(a.X0, b.X0);
         int y0 = Math.Min(a.Y0, b.Y0);

@@ -153,8 +153,25 @@ public partial class Tokenizer {
                     var startPos = blockEntry.StartToken.Position;
 
                     // If the previous block and this block are not connected, they are separate blocks and we must close this block
-                    if (AreaEmpty(new Rectangle(prePos.X0, prePos.Y0, indentToken.Position.X0, prePos.Y0))) {
+                    bool hasEmptyArea = false;
+                    int minX = Math.Min(indentToken.Position.X0, prePos.X0);
+                    int maxX = Math.Max(indentToken.Position.X0, prePos.X0);
 
+                    for (int y = prePos.Y1 + 1; y < indentToken.Position.Y1; y++) {
+                        if (AreaEmpty(new Rectangle(minX, y, maxX, y))) {
+                            hasEmptyArea = true;
+                            break;
+                        }
+                    }
+
+                    if (hasEmptyArea) {
+                        // Obviously only possible at top level
+                        if (indentation == blockData.Count - 1) {
+                            CloseBlock();
+                            break;
+                        } else {
+                            AddError(TokenizerErrors.InvalidBlockShape, Rectangle.Union(startPos, indentToken.Position));
+                        }
                         continue;
                     }
 
@@ -175,38 +192,7 @@ public partial class Tokenizer {
 
             // Add any closing blocks before the newline
             while (indentation < blockData.Count) {
-
-                var blockEntry = blockData[^1];
-                blockData.RemoveAt(blockData.Count-1);
-
-                var startPos = blockEntry.StartToken.Position;
-
-                // Expand up and down as far as possible to capture entire block line for visualization
-                int x = startPos.X0;
-                int y0 = startPos.Y0;
-
-                while (y0 > 0) {
-                    if (image[x, y0 - 1] != BlockLineColor) {
-                        break;
-                    }
-                    y0--;
-                }
-
-                int y1 = startPos.Y1;
-                while (y1 < image.Height-1) {
-                    if (image[x, y1 + 1] != BlockLineColor) {
-                        break;
-                    }
-
-                    y1++;
-                }
-
-                Rectangle closingRect = new(x, y0, x, y1);
-
-                // Swap out the starting block with a new one with updated size information
-                output[blockEntry.StartTokenIndex] = new Token(closingRect, TokenType.StartBlock);
-
-                output.Add(new Token(closingRect, TokenType.EndBlock));
+                CloseBlock();
             }
 
             if (cameFromNewline) {
@@ -230,6 +216,40 @@ public partial class Tokenizer {
             }
 
             return;
+        }
+
+        private void CloseBlock() {
+            var blockEntry = blockData[^1];
+            blockData.RemoveAt(blockData.Count - 1);
+
+            var startPos = blockEntry.StartToken.Position;
+
+            // Expand up and down as far as possible to capture entire block line for visualization
+            int x = startPos.X0;
+            int y0 = startPos.Y0;
+
+            while (y0 > 0) {
+                if (image[x, y0 - 1] != BlockLineColor) {
+                    break;
+                }
+                y0--;
+            }
+
+            int y1 = startPos.Y1;
+            while (y1 < image.Height - 1) {
+                if (image[x, y1 + 1] != BlockLineColor) {
+                    break;
+                }
+
+                y1++;
+            }
+
+            Rectangle closingRect = new(x, y0, x, y1);
+
+            // Swap out the starting block with a new one with updated size information
+            output[blockEntry.StartTokenIndex] = new Token(closingRect, TokenType.StartBlock);
+
+            output.Add(new Token(closingRect, TokenType.EndBlock));
         }
 
         private void ParseKeyword(SimpleToken simpleToken) {
