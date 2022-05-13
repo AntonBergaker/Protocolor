@@ -12,6 +12,8 @@ public readonly struct Rectangle {
     public int Width => X1 - X0 + 1;
     public int Height => Y1 - Y0 + 1;
 
+    public static Rectangle Zero => new Rectangle(0, 0, 0, 0);
+
 
     public Rectangle(Point point0, Point point1) {
         Point0 = point0;

@@ -12,7 +12,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="LinkedAst\" />
+	  <Folder Include="Ir\" />
 	  <Folder Include="Linker\" />
 	</ItemGroup>
 

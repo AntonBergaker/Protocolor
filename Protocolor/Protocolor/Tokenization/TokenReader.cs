@@ -14,7 +14,9 @@ public class TokenReader {
 
     private readonly Token endOfFile;
 
-    public Token Peek() {
+    public bool HasNext => index < tokens.Length;
+
+        public Token Peek() {
         int startIndex = index;
 
         Token token = Read();

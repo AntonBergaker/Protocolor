@@ -38,23 +38,31 @@ public class Token {
     public Token(Rectangle position, TokenType type) {
         Type = type;
         this.Position = position;
-    }
-}
 
-public class KeywordToken : Token {
-    public KeywordToken(Rectangle position, TokenType type) : base(position, type) {
+        if (Type == TokenType.Identifier && this is not IdentifierToken) {
+            throw new ArgumentException($"Token {Type} has a dedicated class, please use it instead.");
+        }
+
+        if (Type == TokenType.NumberLiteral && this is not NumberLiteralToken) {
+            throw new ArgumentException($"Token {Type} has a dedicated class, please use it instead.");
+        }
+
+        if (Type == TokenType.StringLiteral && this is not StringLiteralToken) {
+            throw new ArgumentException($"Token {Type} has a dedicated class, please use it instead.");
+        }
     }
 }
 
 public class NumberLiteralToken : Token {
-    public NumberLiteralToken(Rectangle position) : base(position, TokenType.NumberLiteral) {
-
+    public string Content { get; }
+    public NumberLiteralToken(string content, Rectangle position) : base(position, TokenType.NumberLiteral) {
+        Content = content;
     }
 }
 
 public class StringLiteralToken : Token {
     public string Content { get; }
-    public StringLiteralToken(Rectangle position, string content) : base(position, TokenType.StringLiteral) {
+    public StringLiteralToken(string content, Rectangle position) : base(position, TokenType.StringLiteral) {
         Content = content;
     }
 }
@@ -62,7 +70,7 @@ public class StringLiteralToken : Token {
 public class IdentifierToken : Token {
     public IdentifierFrame Frame { get; }
     
-    public IdentifierToken(Rectangle position, IdentifierFrame frame) : base(position, TokenType.Identifier) {
+    public IdentifierToken(IdentifierFrame frame, Rectangle position) : base(position, TokenType.Identifier) {
         Frame = frame;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Protocolor.Tokenization;
 public static class KeywordLibrary {
-    private static readonly TwoWayDictionary<IdentifierFrame, TokenType> keywords;
+    private static readonly TwoWayDictionary<ShapeFrame, TokenType> keywords;
 
     static KeywordLibrary() {
         (TokenType type, string[] frameStrings)[] values =  new [] {
@@ -85,11 +85,11 @@ public static class KeywordLibrary {
 
         keywords = new();
         foreach (var value in values) {
-            keywords.Add(Utils.StringToFrame(value.frameStrings), value.type);
+            keywords.Add(Utils.StringToShape(value.frameStrings), value.type);
         }
     }
 
-    public static bool TryGetOperator(IdentifierFrame frame, out TokenType type) {
+    public static bool TryGetOperator(ShapeFrame frame, out TokenType type) {
         return keywords.TryGetValue(frame, out type);
     }
 }

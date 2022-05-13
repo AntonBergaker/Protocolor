@@ -36,12 +36,12 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void ErrorGappedBlock() {
-        TokenizationUtil.AssertImageErrors("./gapped_indent.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+        TokenizationUtil.AssertImageErrors("./gapped_indent.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]
     public void ErrorUnalignedBlock() {
-        TokenizationUtil.AssertImageErrors("./unaligned_block.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+        TokenizationUtil.AssertImageErrors("./unaligned_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]
@@ -55,7 +55,7 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void SplitOnWrongBlock() {
-        TokenizationUtil.AssertImageErrors("./split_on_outer_block.png", Tokenizer.TokenizerErrors.InvalidBlockShape);
+        TokenizationUtil.AssertImageErrors("./split_on_outer_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]

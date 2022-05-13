@@ -54,6 +54,23 @@ public static class Utils {
         return StringToFrame(input.Split("\n", StringSplitOptions.RemoveEmptyEntries));
     }
 
+    public static ShapeFrame StringToShape(params string[] strings) {
+        int width = strings.Select(x => x.Length).Max();
+        int height = strings.Length;
+
+        Grid<bool> grid = new(width, height);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (strings[y].Length > x) {
+                    grid[x, y] = (strings[y][x] != ' ');
+                }
+            }
+        }
+
+        return new ShapeFrame(grid);
+    }
+
     public static Grid<RawColor> ImageToArray(Image<Bgra32> image) {
         int width = image.Width;
         int height = image.Height;

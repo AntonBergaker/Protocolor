@@ -128,7 +128,7 @@ public partial class Tokenizer {
                     // If it's one wide, all gray and at the start, its probably an indentation
                     if (blockPosition.Width == 1 && AreaOneColorOrWhitespace(blockPosition, BlockLineColor) && hasPassedIndentation == false) {
                         if (AreaOneColor(blockPosition, BlockLineColor) == false) {
-                            errors.Add(new Error(TokenizerErrors.InvalidBlockShape, blockPosition));
+                            errors.Add(new Error(TokenizerErrors.BlockShapeInvalid, blockPosition));
                         }
 
                         output.Add(new SimpleToken(blockPosition, SimpleTokenType.Indentation));
@@ -189,7 +189,8 @@ public partial class Tokenizer {
                     if (color != OperatorColor) {
                         isOperator = false;
                     }
-                    if (color != StringLiteralColor) {
+                    if ((color == StringLiteralColor ||
+                        (color == OperatorColor && y == position.Y1)) == false) {
                         isStringLiteral = false;
                     }
                     if (color != NumberLiteralColor) {

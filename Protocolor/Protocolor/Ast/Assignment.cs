@@ -4,9 +4,11 @@ namespace Protocolor.Ast;
 
 public class Assignment : Statement {
     public IdentifierFrame Identifier { get; }
+    public Expression Value { get; }
 
-    public Assignment(IdentifierFrame identifier, Rectangle position) : base(position) {
+    public Assignment(IdentifierFrame identifier, Expression value, Rectangle position) : base(position) {
         Identifier = identifier;
+        Value = value;
     }
 
 }

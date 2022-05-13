@@ -42,7 +42,7 @@ public static class TokenizationUtil {
 
                 if (token.Type == TokenType.NewLine) {
                     placeComma = false;
-                    sb.Append("\n");
+                    sb.Append('\n');
                 }
             }
 
@@ -58,7 +58,7 @@ public static class TokenizationUtil {
 
                 if (token.Type == TokenType.NewLine) {
                     placeComma = false;
-                    sb.Append("\n");
+                    sb.Append('\n');
                 }
             }
 
@@ -136,6 +136,12 @@ public class ExpectedToken {
         }, TokenType.Identifier);
     }
 
+    public static implicit operator ExpectedToken(string @string) {
+        return new ExpectedToken((other) => {
+            AssertString(other, @string);
+        }, TokenType.StringLiteral);
+    }
+
     private static void AssertSameFrame(Token token, IdentifierFrame frame) {
         if (token is not IdentifierToken identifierToken) {
             Assert.Fail("Provided token was not an identifier");
@@ -146,6 +152,14 @@ public class ExpectedToken {
 
     private static void AssertPosition(Token token, Rectangle myPosition) {
         Assert.AreEqual(myPosition, token.Position);
+    }
+
+    private static void AssertString(Token token, string text) {
+        if (token is not StringLiteralToken stringToken) {
+            Assert.Fail("Provided token was not a string literal");
+            return;
+        }
+        Assert.AreEqual(text, stringToken.Content);
     }
 
     public void AssertEquals(Token token) {

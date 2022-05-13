@@ -1,11 +1,11 @@
 ﻿using Protocolor.Util;
 
 namespace Protocolor.Ast;
-public abstract class AstNode {
+public abstract class Node {
 
     public Rectangle Position { get; }
 
-    protected AstNode(Rectangle position) {
+    protected Node(Rectangle position) {
         Position = position;
     }
 

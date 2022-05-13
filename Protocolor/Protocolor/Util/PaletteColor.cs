@@ -22,7 +22,7 @@ public struct PaletteColor {
     public static PaletteColor LightBlue = new(Palette.LightBlue);
     public static PaletteColor Lavender = new(Palette.Lavender);
 
-    private enum Palette : short {
+    private enum Palette : byte {
         Black,
         Gray,
         DarkRed,

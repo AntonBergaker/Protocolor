@@ -36,9 +36,7 @@ public partial class Tokenizer {
             return tokens[index];
         }
 
-        public bool HasNext() {
-            return index < tokens.Length;
-        }
+        public bool HasNext => index < tokens.Length;
 
         public void PushState() {
             memoryStack.Push(index);

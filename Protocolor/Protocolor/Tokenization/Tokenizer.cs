@@ -1,4 +1,5 @@
-﻿using Protocolor.Util;
+﻿using System.Text;
+using Protocolor.Util;
 
 namespace Protocolor.Tokenization; 
 
@@ -28,13 +29,43 @@ public partial class Tokenizer {
             "The keyword was not recognized. If this was not meant to be a keyword, a pixel that is not black must be included."
         );
 
-        public static readonly ErrorCode UnalignedLiteral = new ErrorCode(
-            "tokenizer_unaligned_literal",
+        public static readonly ErrorCode StringLiteralUnaligned = new ErrorCode(
+            "tokenizer_string_literal_unaligned",
             ErrorSeverity.Error,
-            "Literal is not properly vertically aligned."
+            "String literal is not properly vertically aligned."
         );
 
-        public static readonly ErrorCode InvalidBlockShape = new ErrorCode(
+        public static readonly ErrorCode StringLiteralUnknownCharacter = new ErrorCode(
+            "tokenizer_string_literal_unknown_character",
+            ErrorSeverity.Error,
+            "The character did not match any known string literal characters."
+        );
+
+        public static readonly ErrorCode StringLiteralAmbiguousCharacter = new ErrorCode(
+            "tokenizer_string_literal_unknown_character",
+            ErrorSeverity.Error,
+            "The character was found but was ambiguous because of its position."
+        );
+
+        public static readonly ErrorCode StringLiteralMissingFullUnderline = new ErrorCode(
+            "tokenizer_string_literal_missing_full_underline",
+            ErrorSeverity.Error,
+            "A character was partially underlined. Capitalized characters require the entire character to be underlined."
+        );
+
+        public static readonly ErrorCode NumberLiteralUnaligned = new ErrorCode(
+            "tokenizer_number_literal_unaligned",
+            ErrorSeverity.Error,
+            "Number literal is not properly vertically aligned."
+        );
+
+        public static readonly ErrorCode NumberLiteralUnknownCharacter = new ErrorCode(
+            "tokenizer_number_unknown_character",
+            ErrorSeverity.Error,
+            "The character did not match any known numbers."
+        );
+
+        public static readonly ErrorCode BlockShapeInvalid = new ErrorCode(
             "tokenizer_invalid_block_shape",
             ErrorSeverity.Error,
             "Block is not properly aligned or filled in. Block must cover the entirety of the lines it encompasses and connect to the rest of the block."
@@ -87,7 +118,7 @@ public partial class Tokenizer {
             errors.AddRange(simpleTokenErrors);
             reader = new SimpleReader(simpleTokens);
 
-            while (reader.HasNext()) {
+            while (reader.HasNext) {
                 var simpleToken = reader.Read();
 
                 switch (simpleToken.Type) {
@@ -113,24 +144,16 @@ public partial class Tokenizer {
 
 
                     case SimpleTokenType.Number:
-                    case SimpleTokenType.String: 
-                        SimpleToken endToken = simpleToken;
-
-                        while (reader.Peek().Type == simpleToken.Type) {
-                            endToken = reader.Read();
-                        }
-
-                        TokenType type = simpleToken.Type == SimpleTokenType.Number
-                            ? TokenType.NumberLiteral
-                            : TokenType.StringLiteral;
-
-                        output.Add(new Token(Rectangle.Union(simpleToken.Position, endToken.Position), type));
+                        ParseNumberLiteral(simpleToken);
                         break;
-                    
+
+                    case SimpleTokenType.String: 
+                        ParseStringLiteral(simpleToken);
+                        break;
 
                     default:
-                        // todo error
-                        break;
+                        throw new Exception($"Encountered an invalid SimpleToken {simpleToken}");
+
                 }
             }
 
@@ -170,7 +193,7 @@ public partial class Tokenizer {
                             CloseBlock();
                             break;
                         } else {
-                            AddError(TokenizerErrors.InvalidBlockShape, Rectangle.Union(startPos, indentToken.Position));
+                            AddError(TokenizerErrors.BlockShapeInvalid, Rectangle.Union(startPos, indentToken.Position));
                         }
                         continue;
                     }
@@ -179,7 +202,7 @@ public partial class Tokenizer {
                     // See that they start at the same X positions
                     if (indentToken.Position.X0 != startPos.X0 ||
                         indentToken.Position.X1 != startPos.X1) {
-                        AddError(TokenizerErrors.InvalidBlockShape, Rectangle.Union(indentToken.Position, startPos));
+                        AddError(TokenizerErrors.BlockShapeInvalid, Rectangle.Union(indentToken.Position, startPos));
                     }
 
                     blockEntry.PreviousToken = indentToken;
@@ -280,10 +303,7 @@ public partial class Tokenizer {
                 }
             }
 
-            if (IdentifierFrame.TryParseFromRaw(position, image, out IdentifierFrame? frame) == false) {
-                AddError(TokenizerErrors.UnknownKeyword, position);
-                return;
-            }
+            ShapeFrame frame = ShapeFrame.ParseFromRaw(position, image);
 
             if (KeywordLibrary.TryGetOperator(frame, out TokenType operatorType) == false) {
                 AddError(TokenizerErrors.UnknownKeyword, position);
@@ -318,7 +338,12 @@ public partial class Tokenizer {
             }
 
             if (isInitializer == false) {
-                output.Add(new Token(pos, TokenType.Identifier));
+                if (IdentifierFrame.TryParseFromRaw(pos, image, out var frame)) {
+                    output.Add(new IdentifierToken(frame, pos));
+                } else {
+                    AddError(TokenizerErrors.ColorNotInPalette, pos);
+                }
+
                 return;
             }
 
@@ -374,9 +399,187 @@ public partial class Tokenizer {
             trimToContent = TrimToContent(new Rectangle(trimToContent.X0+1, trimToContent.Y0, trimToContent.X1-1, trimToContent.Y1-1));
             output.Add(new Token(pos, leftToken));
             
-            output.Add(new IdentifierToken(trimToContent, ParseFrame(trimToContent)));
+            output.Add(new IdentifierToken(ParseFrame(trimToContent), trimToContent));
             
             output.Add(new Token(pos, rightToken));
+        }
+
+        private void ParseStringLiteral(SimpleToken startToken) {
+            StringBuilder content = new StringBuilder();
+
+            // Read all tokens and put them in a list so we can manip easier
+            var tokenList = new List<SimpleToken>() {
+                startToken
+            };
+
+            int forcedY1 = -1;
+
+            while (reader.Peek().Type == SimpleTokenType.String) {
+                tokenList.Add(reader.Read());
+            }
+
+            List<(Rectangle rect, bool isCapitalized)> tokenPosList = new();
+
+            foreach (SimpleToken simpleToken in tokenList) {
+                Rectangle tokenPos = simpleToken.Position;
+
+                // Look for capitalization underline
+                bool hasBlackAtBottom = false;
+
+                for (int x = tokenPos.X0; x <= tokenPos.X1; x++) {
+                    if (image[x, tokenPos.Y1] == OperatorColor) {
+                        hasBlackAtBottom = true;
+                        break;
+                    }
+                }
+
+                // No black, already parsed
+                if (hasBlackAtBottom == false) {
+                    tokenPosList.Add((tokenPos, false));
+                    continue;
+                }
+
+                if (forcedY1 == -1) {
+                    forcedY1 = tokenPos.Y1;
+                } else {
+                    if (forcedY1 != tokenPos.Y1) {
+                        AddError(TokenizerErrors.StringLiteralUnaligned, tokenPos);
+                    }
+                }
+
+                tokenPos = new Rectangle(tokenPos.Point0, tokenPos.Point1 - new Point(0, 1));
+
+                void AddTokenPos(Rectangle position) {
+                    // Check for complete black underline
+                    bool hasBlack = false;
+                    bool hasWhite = false;
+
+                    for (int x = position.X0; x <= position.X1; x++) {
+                        if (image[x, position.Y1 + 1] == OperatorColor) {
+                            hasBlack = true;
+                        }
+                        if (image[x, position.Y1 + 1] == WhiteSpace) {
+                            hasWhite = true;
+                        }
+                    }
+
+                    if (hasBlack && hasWhite) {
+                        AddError(TokenizerErrors.StringLiteralMissingFullUnderline, position);
+                    }
+
+                    tokenPosList.Add((TrimToContent(position), hasWhite == false));
+                }
+
+                int startColumn = tokenPos.X0;
+                // Look for additional splits, since the underline was parsed as an entire token we might be able to split it further
+                for (int x = tokenPos.X0; x <= tokenPos.X1; x++) {
+                    bool emptyColumn = AreaEmpty(new Rectangle(x, tokenPos.Y0, x, tokenPos.Y1));
+
+                    if (emptyColumn && startColumn == x) {
+                        startColumn = x+1;
+                        continue;
+                    }
+
+                    if (emptyColumn) {
+                        AddTokenPos(new Rectangle(startColumn, tokenPos.Y0, x - 1, tokenPos.Y1));
+                        startColumn = x + 1;
+                    }
+                }
+
+                // Add stray
+                if (startColumn <= tokenPos.X1) {
+                    AddTokenPos(new Rectangle(startColumn, tokenPos.Y0, tokenPos.X1, tokenPos.Y1));
+                }
+            }
+
+            Rectangle position = tokenPosList.Select(x => x.rect).UnionAll();
+            if (forcedY1 != -1) {
+                position = new(position.X0, Math.Min(position.Y0, forcedY1 - 4), position.X1, forcedY1 - 1);
+            }
+
+            if (position.Height > 4) {
+                AddError(TokenizerErrors.StringLiteralUnaligned, position);
+                output.Add(new StringLiteralToken("", position));
+                return;
+            }
+
+            foreach (var tokenData in tokenPosList) {
+                var (tokenPos, isCapitalized) = tokenData;
+
+                void AppendToken(CharacterLibrary.CharacterData data) {
+                    if (isCapitalized && data.UppercaseLetter != '\0') {
+                        content.Append(data.UppercaseLetter);
+                    } else {
+                        content.Append(data.LowercaseLetter);
+                    }
+                }
+
+                ShapeFrame frame = ShapeFrame.ParseFromRaw(tokenPos, image);
+                var possibleCharacters = CharacterLibrary.GetCharactersForShape(frame);
+
+                if (possibleCharacters.Length == 0) {
+                    AddError(TokenizerErrors.StringLiteralUnknownCharacter, tokenPos);
+                    continue;
+                }
+
+                if (possibleCharacters.Length == 1) {
+                    AppendToken(possibleCharacters[0]);
+                    continue;
+                }
+
+                bool found = false;
+                foreach (var possibleCharacter in possibleCharacters) {
+                    if (position.Height == 4 && possibleCharacter.Offset == tokenPos.Y0 - position.Y0) {
+                        AppendToken(possibleCharacter);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (found == false) {
+                    AddError(TokenizerErrors.StringLiteralAmbiguousCharacter, tokenPos);
+                }
+
+            }
+
+            output.Add(new StringLiteralToken(content.ToString(), position));
+        }
+
+        private static readonly HashSet<char> ValidNumberChars = "0123456789.-".ToHashSet();
+        private void ParseNumberLiteral(SimpleToken startToken) {
+            StringBuilder content = new StringBuilder();
+
+            var list = new List<SimpleToken>() {
+                startToken
+            };
+
+            while (reader.Peek().Type == SimpleTokenType.Number) {
+                list.Add(reader.Read());
+            }
+
+            Rectangle position = list.Select(x => x.Position).UnionAll();
+
+            if (position.Height > 4) {
+                AddError(TokenizerErrors.NumberLiteralUnaligned, position);
+                output.Add(new NumberLiteralToken("0", position));
+                return;
+            }
+
+            foreach (SimpleToken token in list) {
+                ShapeFrame frame = ShapeFrame.ParseFromRaw(token.Position, image);
+                var possibleCharacters = CharacterLibrary.GetCharactersForShape(frame);
+
+                var validCharacter = possibleCharacters.FirstOrDefault(x => ValidNumberChars.Contains(x.LowercaseLetter));
+
+                if (validCharacter == null) {
+                    AddError(TokenizerErrors.NumberLiteralUnknownCharacter, token.Position);
+                    continue;
+                }
+
+                content.Append(validCharacter.LowercaseLetter);
+            }
+
+            output.Add(new NumberLiteralToken(content.ToString(), position));
         }
 
         private void AddError(ErrorCode code, Rectangle position) {
