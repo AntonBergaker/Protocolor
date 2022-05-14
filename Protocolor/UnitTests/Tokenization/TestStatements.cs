@@ -7,11 +7,11 @@ class TestStatements {
     [Test]
     public void SimpleStatements() {
 
-        TokenizationUtil.AssertTokenizedImageEquals("./statement.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./statement.png", new ExpectedToken[] {
             TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral
         });
 
-        TokenizationUtil.AssertTokenizedImageEquals("./statement_multiline.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./statement_multiline.png", new ExpectedToken[] {
             TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
             TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.Add, TokenType.NumberLiteral
         });        
@@ -19,7 +19,7 @@ class TestStatements {
 
     [Test]
     public void TouchingEdges() {
-        TokenizationUtil.AssertTokenizedImageEquals("./touching_edges.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./touching_edges.png", new ExpectedToken[] {
             TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.StringLiteral, TokenType.NewLine,
             TokenType.Identifier, TokenType.Pipe, TokenType.Pipe
         });

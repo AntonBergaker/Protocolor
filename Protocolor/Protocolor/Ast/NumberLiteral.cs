@@ -12,4 +12,16 @@ public class NumberLiteral : Expression {
     public NumberLiteral(string content, Rectangle rectangle) : base(rectangle) {
         Content = content;
     }
+
+    public override bool Equals(Node other) {
+        if (other is not NumberLiteral nl) {
+            return false;
+        }
+
+        return nl.Content == Content;
+    }
+
+    public override string ToString() {
+        return Content;
+    }
 }

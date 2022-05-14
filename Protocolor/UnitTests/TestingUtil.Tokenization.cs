@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Protocolor;
 using Protocolor.Tokenization;
@@ -11,9 +13,9 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Rectangle = Protocolor.Util.Rectangle;
 
-namespace UnitTests.Tokenization;
-public static class TokenizationUtil {
-    public static void AssertTokenizedImageEquals(string path, ExpectedToken[] expectedTypes, [CallerFilePath] string callerPath = "") {
+namespace UnitTests;
+public static partial class TestingUtil {
+    public static void AssertImageEqualsTokens(string path, ExpectedToken[] expectedTypes, [CallerFilePath] string callerPath = "") {
         if (expectedTypes.Last().Type != TokenType.NewLine) {
             expectedTypes = expectedTypes.Append(TokenType.NewLine).ToArray();
         }
@@ -21,7 +23,7 @@ public static class TokenizationUtil {
         (Token[] tokens, Error[] errors) = TokenizeImage(path, callerPath);
 
         if (errors.Any(x => x.Code.Severity >= ErrorSeverity.Warning)) {
-            Assert.Fail("Compilation failed with errors: " + string.Join("\n", errors.Select(x => x.ToString())));
+            Assert.Fail("Tokenization failed with errors: " + string.Join("\n", errors.Select(x => x.ToString())));
 
         }
 
@@ -71,7 +73,7 @@ public static class TokenizationUtil {
         }
     }
 
-    public static void AssertImageErrors(string path, ErrorCode errorCode, Rectangle? location = null, [CallerFilePath] string callerPath = "") {
+    public static void AssertTokenizedImageErrors(string path, ErrorCode errorCode, Rectangle? location = null, [CallerFilePath] string callerPath = "") {
         (Token[] tokens, Error[] errors) = TokenizeImage(path, callerPath);
 
         if (errors.Length == 0) {
@@ -110,16 +112,20 @@ public static class TokenizationUtil {
 /// </summary>
 public class ExpectedToken {
     private readonly Action<Token>? compareFunction;
-    public TokenType Type { get; }
+    public TokenType Type {
+        get;
+    }
 
     public ExpectedToken(TokenType type, Rectangle position) : this((other) => {
         AssertPosition(other, position);
-    }, type) { }
+    }, type) {
+    }
 
     public ExpectedToken(IdentifierFrame frame, Rectangle position) : this((other) => {
         AssertPosition(other, position);
         AssertSameFrame(other, frame);
-    }, TokenType.Identifier) { }
+    }, TokenType.Identifier) {
+    }
 
     private ExpectedToken(Action<Token>? compareFunction, TokenType type) {
         Type = type;

@@ -45,9 +45,12 @@ public class Error {
     public Rectangle Position { get; }
     public ErrorCode Code { get; }
     
-    public Error(ErrorCode code, Rectangle position) {
+    public string Message { get; }
+
+    public Error(ErrorCode code, Rectangle position, string? customMessage = null) {
         Position = position;
         Code = code;
+        Message = customMessage ?? code.Description;
     }
 
     public override string ToString() {

@@ -7,7 +7,7 @@ class TestVariableDeclarations {
 
     [Test]
     public void ValidDeclaration() {
-        TokenizationUtil.AssertTokenizedImageEquals("./valid.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./valid.png", new ExpectedToken[] {
             TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
             TokenType.VarDeclarationL, TokenType.Identifier, TokenType.VarDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
             TokenType.Identifier, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Identifier, TokenType.Assignment, TokenType.NumberLiteral,
@@ -16,7 +16,7 @@ class TestVariableDeclarations {
 
     [Test]
     public void ValidDeclarationEdgecases() {
-        TokenizationUtil.AssertTokenizedImageEquals("./valid_edgecases.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./valid_edgecases.png", new ExpectedToken[] {
             new(TokenType.VarDeclarationL, new(1, 1, 6, 3)), 
             new(Utils.StringToFrame(
                 "pbbp",
@@ -37,11 +37,11 @@ class TestVariableDeclarations {
 
     [Test]
     public void ErrorUnclearMutability() {
-        TokenizationUtil.AssertImageErrors("./error_unclear_mutability.png", Tokenizer.TokenizerErrors.DeclarationUnclearError);
+        TestingUtil.AssertTokenizedImageErrors("./error_unclear_mutability.png", Tokenizer.TokenizerErrors.DeclarationUnclearError);
     }
 
     [Test]
     public void ErrorUnevenSidesMutability() {
-        TokenizationUtil.AssertImageErrors("./error_uneven_sides.png", Tokenizer.TokenizerErrors.DeclarationUnevenError);
+        TestingUtil.AssertTokenizedImageErrors("./error_uneven_sides.png", Tokenizer.TokenizerErrors.DeclarationUnevenError);
     }
 }

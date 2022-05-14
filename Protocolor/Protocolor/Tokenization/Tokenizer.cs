@@ -53,6 +53,12 @@ public partial class Tokenizer {
             "A character was partially underlined. Capitalized characters require the entire character to be underlined."
         );
 
+        public static readonly ErrorCode StringLiteralSpaceTooLarge = new ErrorCode(
+            "tokenizer_string_literal_space_too_large",
+            ErrorSeverity.Error,
+            "The space in the string literal was too large."
+        );
+
         public static readonly ErrorCode NumberLiteralUnaligned = new ErrorCode(
             "tokenizer_number_literal_unaligned",
             ErrorSeverity.Error,
@@ -503,6 +509,8 @@ public partial class Tokenizer {
                 return;
             }
 
+            int previousX1 = -1;
+
             foreach (var tokenData in tokenPosList) {
                 var (tokenPos, isCapitalized) = tokenData;
 
@@ -513,6 +521,19 @@ public partial class Tokenizer {
                         content.Append(data.LowercaseLetter);
                     }
                 }
+
+                if (previousX1 != -1) {
+                    int diff = tokenPos.X0 - previousX1;
+                    if (diff is 4 or 5 or 6) {
+                        content.Append(" ");
+                    }
+
+                    if (diff > 6) {
+                        AddError(TokenizerErrors.StringLiteralSpaceTooLarge, new(previousX1, tokenPos.Y0, tokenPos.X0, tokenPos.Y1));
+                    }
+                }
+
+                previousX1 = tokenPos.X1;
 
                 ShapeFrame frame = ShapeFrame.ParseFromRaw(tokenPos, image);
                 var possibleCharacters = CharacterLibrary.GetCharactersForShape(frame);

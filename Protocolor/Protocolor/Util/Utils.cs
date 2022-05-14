@@ -1,11 +1,10 @@
-﻿using SixLabors.ImageSharp;
+﻿using System.Text;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Protocolor.Util;
 public static class Utils {
-
-
-    private static Dictionary<char, PaletteColor> charToColor = new() {
+    private static readonly TwoWayDictionary<char, PaletteColor> charToColor = new() {
         { 'X', PaletteColor.Black },
         { 'G', PaletteColor.Gray },
         { 'r', PaletteColor.DarkRed },
@@ -82,5 +81,22 @@ public static class Utils {
             }
         }
         return pixels;
+    }
+
+    public static string FrameToString(Grid<PaletteColor> image, string newlineChar = "\n") {
+        int width = image.Width;
+        int height = image.Height;
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                sb.Append(charToColor[image[x, y]]);
+            }
+
+            sb.Append(newlineChar);
+        }
+
+        return sb.ToString();
     }
 }

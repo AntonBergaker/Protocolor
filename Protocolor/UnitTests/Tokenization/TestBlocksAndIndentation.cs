@@ -12,7 +12,7 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void SingleStatement() {
-        TokenizationUtil.AssertTokenizedImageEquals("./single_statement.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./single_statement.png", new ExpectedToken[] {
             TokenType.If, TokenType.Pipe, TokenType.Identifier, TokenType.Equals, TokenType.NumberLiteral, TokenType.Pipe, TokenType.NewLine,
             TokenType.StartBlock, TokenType.Identifier, TokenType.Assignment, TokenType.NumberLiteral, TokenType.EndBlock,
         });
@@ -24,7 +24,7 @@ public class TestBlocksAndIndentation {
         Rectangle secondRect = new(3, 6, 3, 19);
         Rectangle thirdRect = new(5, 13, 5, 19);
 
-        TokenizationUtil.AssertTokenizedImageEquals("./nested_blocks.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./nested_blocks.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, TokenType.Identifier, TokenType.NewLine,
             new (TokenType.StartBlock, firstRect), new (TokenType.StartBlock, secondRect),
             TokenType.Identifier, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
@@ -36,17 +36,17 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void ErrorGappedBlock() {
-        TokenizationUtil.AssertImageErrors("./gapped_indent.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
+        TestingUtil.AssertTokenizedImageErrors("./gapped_indent.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]
     public void ErrorUnalignedBlock() {
-        TokenizationUtil.AssertImageErrors("./unaligned_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
+        TestingUtil.AssertTokenizedImageErrors("./unaligned_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]
     public void BlocksWithoutSeparator() {
-        TokenizationUtil.AssertTokenizedImageEquals("./blocks_without_separator.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./blocks_without_separator.png", new ExpectedToken[] {
             TokenType.If, TokenType.Pipe, TokenType.Identifier, TokenType.Equals, TokenType.NumberLiteral, TokenType.Pipe, TokenType.NewLine,
             TokenType.StartBlock, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.EndBlock, TokenType.NewLine,
             TokenType.StartBlock, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.EndBlock,
@@ -55,12 +55,12 @@ public class TestBlocksAndIndentation {
 
     [Test]
     public void SplitOnWrongBlock() {
-        TokenizationUtil.AssertImageErrors("./split_on_outer_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
+        TestingUtil.AssertTokenizedImageErrors("./split_on_outer_block.png", Tokenizer.TokenizerErrors.BlockShapeInvalid);
     }
 
     [Test]
     public void StartWithBlock() {
-        TokenizationUtil.AssertTokenizedImageEquals("./start_with_block.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./start_with_block.png", new ExpectedToken[] {
             TokenType.StartBlock, TokenType.Identifier, TokenType.Assignment, TokenType.Identifier, TokenType.EndBlock,
         });
     }

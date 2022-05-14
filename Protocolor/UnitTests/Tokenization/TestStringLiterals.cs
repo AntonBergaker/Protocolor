@@ -18,14 +18,14 @@ class TestStringLiterals {
 
     [Test]
     public void EveryCharacter() {
-        TokenizationUtil.AssertTokenizedImageEquals("./every_character.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./every_character.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, "abcdefghijklmnopqrstuvwxyz0123456789!#%'()*+,-./:;<=>?[]\\^_{|}~"
         });
     }
 
     [Test]
     public void ValidStringLiteralWithSpaces() {
-        TokenizationUtil.AssertTokenizedImageEquals("./valid_with_spaces.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./valid_with_spaces.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, "hello world", TokenType.NewLine,
             TokenType.Identifier, TokenType.Assignment, "hi universe",
         });
@@ -33,14 +33,14 @@ class TestStringLiterals {
 
     [Test]
     public void Capitalization() {
-        TokenizationUtil.AssertTokenizedImageEquals("./capitalization.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./capitalization.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, "SaRcaSM"
         });
     }
 
     [Test]
     public void CapitalizationForceUnambiguous() {
-        TokenizationUtil.AssertTokenizedImageEquals("./capitalization_force_unambiguous.png", new ExpectedToken[] {
+        TestingUtil.AssertImageEqualsTokens("./capitalization_force_unambiguous.png", new ExpectedToken[] {
             TokenType.Identifier, TokenType.Assignment, "'", TokenType.NewLine,
             TokenType.Identifier, TokenType.Assignment, ".", TokenType.NewLine,
             TokenType.Identifier, TokenType.Assignment, ",", TokenType.NewLine,
@@ -49,6 +49,6 @@ class TestStringLiterals {
 
     [Test]
     public void IncompleteCapitalizationErrors() {
-        TokenizationUtil.AssertImageErrors("./incomplete_capitalization.png", Tokenizer.TokenizerErrors.StringLiteralMissingFullUnderline);
+        TestingUtil.AssertTokenizedImageErrors("./incomplete_capitalization.png", Tokenizer.TokenizerErrors.StringLiteralMissingFullUnderline);
     }
 }

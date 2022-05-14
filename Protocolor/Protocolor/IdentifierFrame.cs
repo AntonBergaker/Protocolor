@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Protocolor.Util;
 
 namespace Protocolor;
@@ -85,5 +86,14 @@ public class IdentifierFrame : IEquatable<IdentifierFrame> {
         }
 
         return Equals(frame);
+    }
+
+    public override string ToString() {
+        // Most places this is visible is in debug screens, so replace newline with a | for better readability in tests.
+        return Utils.FrameToString(grid, "|");
+    }
+
+    public string ToString(string newlineChar) {
+        return Utils.FrameToString(grid, newlineChar);
     }
 }

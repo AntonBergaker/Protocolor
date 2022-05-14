@@ -11,4 +11,16 @@ public class Assignment : Statement {
         Value = value;
     }
 
+    public override bool Equals(Node other) {
+        if (other is not Assignment assignment) {
+            return false;
+        }
+
+        return Identifier.Equals(assignment.Identifier) &&
+               Value.Equals(assignment.Value);
+    }
+
+    public override string ToString() {
+        return $"{Identifier} <- {Value}";
+    }
 }
