@@ -6,6 +6,11 @@ namespace Protocolor;
 public class IdentifierFrame : IEquatable<IdentifierFrame> {
     private readonly Grid<PaletteColor> grid;
 
+    public int Width => grid.Width;
+    public int Height => grid.Height;
+
+    public PaletteColor this[int x, int y] => grid[x, y];
+
     public IdentifierFrame(Grid<PaletteColor> grid) {
         this.grid = grid;
     }

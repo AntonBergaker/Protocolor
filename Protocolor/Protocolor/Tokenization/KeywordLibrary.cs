@@ -42,6 +42,31 @@ public static class KeywordLibrary {
                 "X ",
             }),
 
+            (TokenType.Modulo, new[] {
+                "X X ",
+                "  X ",
+                " X  ",
+                " X X",
+            }),
+
+            (TokenType.BooleanAnd, new[] {
+                " X ",
+                "X X",
+                "X X",
+            }),
+
+            (TokenType.BooleanOr, new[] {
+                "X X",
+                "X X",
+                " X ",
+            }),
+
+            (TokenType.BooleanXor, new[] {
+                "X X",
+                " X ",
+                "XXX",
+            }),
+
             (TokenType.Equals, new [] {
                 "XXX",
                 "   ",
@@ -56,7 +81,7 @@ public static class KeywordLibrary {
                 "  X",
             }),
 
-            (TokenType.LesserThan, new [] {
+            (LesserThan: TokenType.LessThan, new [] {
                 " X",
                 "X ",
                 " X",
@@ -68,7 +93,7 @@ public static class KeywordLibrary {
                 "X ",
             }),
 
-            (TokenType.LesserOrEqualThan, new [] {
+            (LesserOrEqualThan: TokenType.LessOrEqualThan, new [] {
                 " X ",
                 "X  ",
                 " X ",

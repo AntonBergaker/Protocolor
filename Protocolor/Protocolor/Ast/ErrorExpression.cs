@@ -12,7 +12,9 @@ public class ErrorExpression : Expression {
         return other is ErrorExpression;
     }
 
-    public override string ToString() {
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
         return "ERROR!!!";
     }
 }

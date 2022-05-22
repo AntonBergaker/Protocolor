@@ -3,8 +3,7 @@ using Protocolor.Tokenization;
 using Protocolor.Util;
 
 namespace Protocolor.Parsing;
-public class Parser {
-
+public partial class Parser {
     public static class ParserErrors {
         public static ErrorCode UnexpectedToken =
             new("parser_unexpected_token", ErrorSeverity.Fatal, "Unexpected token. The parser expected a different token here.");
@@ -16,7 +15,7 @@ public class Parser {
             new("parser_variable_wrong_identifier_type", ErrorSeverity.Fatal, "Variable had the wrong token type. Make sure it's a valid identifier with a valid set of colors.");
     }
 
-    private class ParserInstance {
+    private partial class ParserInstance {
         private readonly TokenReader reader;
         private bool calledRan;
         private List<Error> errors;
@@ -157,8 +156,40 @@ public class Parser {
             return null!;
         }
 
+
         private Expression ReadExpression() {
-            return ReadLiteral();
+            return ReadBinaryBooleanOr();
+        }
+
+        private Expression ReadBinaryBooleanOr() => GenericReadBinary(TokenType.BooleanOr, ReadBinaryBooleanXor);
+        private Expression ReadBinaryBooleanXor() => GenericReadBinary(TokenType.BooleanOr, ReadBinaryBooleanAnd);
+        private Expression ReadBinaryBooleanAnd() => GenericReadBinary(TokenType.BooleanOr, ReadComparison);
+
+        private static readonly TokenType[] ComparisonTokens = new[] {
+            TokenType.Equals, TokenType.NotEquals, TokenType.GreaterOrEqualThan, TokenType.GreaterThan, TokenType.LessOrEqualThan, TokenType.LessThan,
+        };
+
+        private Expression ReadComparison() => GenericReadBinary(ComparisonTokens, ReadBinaryAddSubtract);
+
+        private static readonly TokenType[] AddSubtractTokens = new[] {
+            TokenType.Add, TokenType.Subtract,
+        };
+        private Expression ReadBinaryAddSubtract() => GenericReadBinary(AddSubtractTokens, ReadMultiplyDivide);
+
+        private static readonly TokenType[] MultiplyDivideTokens = new[] {
+            TokenType.Divide, TokenType.Multiply, TokenType.Modulo,
+        };
+        private Expression ReadMultiplyDivide() => GenericReadBinary(MultiplyDivideTokens, ReadLiteral);
+
+
+        private Expression ReadAccessor() {
+            var expression = ReadLiteral();
+
+            while (reader.Peek().Type == TokenType.Dot) {
+
+            }
+
+            return expression;
         }
 
         private Expression ReadLiteral() {
@@ -166,40 +197,36 @@ public class Parser {
         }
 
         private Expression ReadLiteral(Token token) {
-            switch (token.Type) {
-                case TokenType.NumberLiteral:
-                    return ReadNumberLiteral();
-                case TokenType.Identifier:
-                    return ReadIdentifier();
-                default:
-                    AddError(ParserErrors.UnexpectedToken, token.Position, "Unexpected token. Expected an expression.");
-                    return new ErrorExpression(token.Position);
-            }
-        }
-
-        private Expression ReadIdentifier() {
-            throw new NotImplementedException();
-        }
-
-        private Expression ReadNumberLiteral() {
-            throw new NotImplementedException();
-        }
-
-        private static bool BracketMatches(Token opening, Token closing) {
-            if (opening.Type == TokenType.Pipe) {
-                return closing.Type == TokenType.Pipe && 
-                       opening.Position.Height == closing.Position.Height;
+            if (token.Type == TokenType.NumberLiteral) {
+                return ReadNumberLiteral(token);
             }
 
-            if (opening.Type == TokenType.BracketL) {
-                return closing.Type == TokenType.BracketR;
+            if (token.Type == TokenType.StringLiteral) {
+                return ReadStringLiteral(token);
             }
 
-            throw new Exception("Opening bracket was not a valid type");
+            if (token.Type == TokenType.Identifier) {
+                return ReadIdentifierLiteral(token);
+            }
+
+
+            AddError(ParserErrors.UnexpectedToken, token.Position, "Unexpected token. Expected an expression.");
+            return new ErrorExpression(token.Position);
         }
 
-        private void AddError(ErrorCode code, Rectangle position, string? message = null) {
-            errors.Add(new Error(code, position, message));
+        private Expression ReadIdentifierLiteral(Token token) {
+            IdentifierToken identifierToken = (IdentifierToken)token;
+            return new IdentifierExpression(identifierToken.Frame, identifierToken.Position);
+        }
+
+        private Expression ReadNumberLiteral(Token token) {
+            NumberLiteralToken numberToken = (NumberLiteralToken)token;
+            return new NumberLiteral(numberToken.Content, numberToken.Position);
+        }
+
+        private Expression ReadStringLiteral(Token token) {
+            StringLiteralToken stringToken = (StringLiteralToken)token;
+            return new StringLiteral(stringToken.Content, stringToken.Position);
         }
     }
 

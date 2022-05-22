@@ -38,6 +38,14 @@ public class TokenReader {
         }
     }
 
+    public void Skip() {
+        Read();
+    }
+
+    public void SkipIncludeNewline() {
+        ReadIncludeNewline();
+    }
+
     public Token ReadIncludeNewline() {
         if (index >= tokens.Length) {
             return endOfFile;

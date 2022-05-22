@@ -52,6 +52,26 @@ public readonly struct Rectangle {
         return new Rectangle(x0, y0, x1, y1);
     }
 
+    public static Rectangle Union(Rectangle a, Rectangle b, Rectangle c) {
+        int x0 = Math.Min(a.X0, Math.Min(b.X0, c.X0));
+        int y0 = Math.Min(a.Y0, Math.Min(b.Y0, c.Y0));
+
+        int x1 = Math.Max(a.X1, Math.Max(b.X1, c.X1));
+        int y1 = Math.Max(a.Y1, Math.Max(b.Y1, c.Y1));
+
+        return new Rectangle(x0, y0, x1, y1);
+    }
+
+    public static Rectangle Union(Rectangle a, Rectangle b, Rectangle c, Rectangle d) {
+        int x0 = Math.Min(Math.Min(a.X0, b.X0), Math.Min(c.X0, d.X0));
+        int y0 = Math.Min(Math.Min(a.Y0, b.X0), Math.Min(c.Y0, d.Y0));
+
+        int x1 = Math.Max(Math.Max(a.X1, b.X1), Math.Max(c.X1, d.X1));
+        int y1 = Math.Max(Math.Max(a.Y1, b.Y1), Math.Max(c.Y1, d.Y1));
+
+        return new Rectangle(x0, y0, x1, y1);
+    }
+
     public bool Contains(Point point) {
         return point.X >= X0 && point.X <= X1 && point.Y >= Y0 && point.Y <= Y1;
     }

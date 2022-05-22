@@ -37,18 +37,21 @@ public class VariableDeclaration : Statement {
                Equals(Type, otherVD.Type);
     }
 
-    public override string ToString() {
+
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
         StringBuilder sb = new StringBuilder();
-        sb.Append(Kind == VariableKind.Const ? "const" : "var");
+        sb.Append(Kind == VariableKind.Const ? "const " : "var ");
 
         if (Type != null) {
-            sb.Append(Type.ToStringStart());
+            sb.Append(Type.ToStringStart(identifierFormatter) + " ");
         }
 
-        sb.Append(VariableIdentifier);
+        sb.Append(identifierFormatter(VariableIdentifier));
 
         if (Type != null) {
-            sb.Append(Type.ToStringEnd());
+            sb.Append(" " + Type.ToStringEnd(identifierFormatter));
         }
 
         if (Initializer != null) {

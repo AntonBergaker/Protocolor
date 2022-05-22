@@ -1,37 +1,38 @@
 ﻿using NUnit.Framework;
 using Protocolor.Tokenization;
 using Protocolor.Util;
+using static Protocolor.Tokenization.TokenType;
 
 namespace UnitTests.Tokenization;
 class TestVariableDeclarations {
 
     [Test]
     public void ValidDeclaration() {
-        TestingUtil.AssertImageEqualsTokens("./valid.png", new ExpectedToken[] {
-            TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
-            TokenType.VarDeclarationL, TokenType.Identifier, TokenType.VarDeclarationR, TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
-            TokenType.Identifier, TokenType.ConstDeclarationL, TokenType.Identifier, TokenType.ConstDeclarationR, TokenType.Identifier, TokenType.Assignment, TokenType.NumberLiteral,
+        TestingUtil.AssertImageEqualsTokens("./valid.png", new ShorthandToken[] {
+            ConstDeclarationL, Identifier, ConstDeclarationR, Assignment, NumberLiteral, NewLine,
+            VarDeclarationL, Identifier, VarDeclarationR, Assignment, NumberLiteral, NewLine,
+            Identifier, ConstDeclarationL, Identifier, ConstDeclarationR, Identifier, Assignment, NumberLiteral,
         });
     }
 
     [Test]
     public void ValidDeclarationEdgecases() {
-        TestingUtil.AssertImageEqualsTokens("./valid_edgecases.png", new ExpectedToken[] {
-            new(TokenType.VarDeclarationL, new(1, 1, 6, 3)), 
+        TestingUtil.AssertImageEqualsTokens("./valid_edgecases.png", new ShorthandToken[] {
+            new(VarDeclarationL, new(1, 1, 6, 3)), 
             new(Utils.StringToFrame(
                 "pbbp",
                 "CbbC"
                 ), new (2, 1, 5, 2)), 
             
-            new(TokenType.VarDeclarationR, new(1, 1, 6, 3)), 
-            TokenType.Assignment, TokenType.StringLiteral, TokenType.NewLine,
+            new(VarDeclarationR, new(1, 1, 6, 3)), 
+            Assignment, StringLiteral, NewLine,
 
 
-            new(TokenType.ConstDeclarationL, new(0, 6, 8, 17)), 
+            new(ConstDeclarationL, new(0, 6, 8, 17)), 
             new(Utils.StringToFrame("g"), new (2, 11, 2, 11)), 
-            new(TokenType.ConstDeclarationR, new(0, 6, 8, 17)), 
+            new(ConstDeclarationR, new(0, 6, 8, 17)), 
             
-            TokenType.Assignment, TokenType.NumberLiteral, TokenType.NewLine,
+            Assignment, NumberLiteral, NewLine,
         });
     }
 

@@ -3,6 +3,12 @@
 namespace Protocolor.Ast;
 public abstract class Node : IEquatable<Node> {
 
+    public delegate string IdentifierFormatter(IdentifierFrame frame);
+    protected string DefaultIdentifierFormatter(IdentifierFrame frame) {
+        return frame.ToString("|");
+    }
+
+
     public Rectangle Position { get; }
 
     protected Node(Rectangle position) {
@@ -20,4 +26,5 @@ public abstract class Node : IEquatable<Node> {
 
     public abstract override string ToString();
 
+    public abstract string ToString(IdentifierFormatter identifierFormatter);
 }

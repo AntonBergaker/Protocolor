@@ -20,7 +20,9 @@ public class Assignment : Statement {
                Value.Equals(assignment.Value);
     }
 
-    public override string ToString() {
-        return $"{Identifier} <- {Value}";
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
+        return $"{identifierFormatter(Identifier)} <- {Value.ToString(identifierFormatter)}";
     }
 }

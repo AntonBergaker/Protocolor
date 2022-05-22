@@ -3,26 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Protocolor.Util;
 
 namespace Protocolor.Ast;
-public class ExpressionStatement : Statement {
-    public Expression Expression { get; }
+public class StringLiteral : Expression {
+    public string Content { get; }
 
-    public ExpressionStatement(Expression expression) : base(expression.Position) {
-        Expression = expression;
+    public StringLiteral(string content, Rectangle rectangle) : base(rectangle) {
+        Content = content;
     }
 
     public override bool Equals(Node other) {
-        if (other is not ExpressionStatement es) {
+        if (other is not StringLiteral sl) {
             return false;
         }
 
-        return es.Expression.Equals(Expression);
+        return sl.Content == Content;
     }
 
     public override string ToString() => ToString(DefaultIdentifierFormatter);
 
     public override string ToString(IdentifierFormatter identifierFormatter) {
-        return Expression.ToString(identifierFormatter);
+        return $"\"{Content}\"";
     }
 }

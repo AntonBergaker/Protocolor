@@ -28,19 +28,21 @@ public class TypeReference : Node {
                Enumerable.SequenceEqual(Generics, otherTr.Generics);
     }
 
-    public string ToStringStart() {
+    public string ToStringStart(IdentifierFormatter identifierFormatter) {
         if (Generics.Length == 0) {
-            return OpeningIdentifier.ToString();
+            return identifierFormatter(OpeningIdentifier);
         }
 
-        return $"{OpeningIdentifier} <{string.Join(", ", Generics)}>";
+        return $"{identifierFormatter(OpeningIdentifier)} <{string.Join(", ", Generics.Select(x => identifierFormatter(x)))}>";
     }
 
-    public string ToStringEnd() {
-        return ClosingIdentifier.ToString();
+    public string ToStringEnd(IdentifierFormatter identifierFormatter) {
+        return identifierFormatter(ClosingIdentifier);
     }
 
-    public override string ToString() {
-        return ToStringStart() + " | " + ToStringEnd();
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
+        return ToStringStart(identifierFormatter) + " | " + ToStringEnd(identifierFormatter);
     }
 }

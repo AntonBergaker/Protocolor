@@ -15,7 +15,7 @@ using Rectangle = Protocolor.Util.Rectangle;
 
 namespace UnitTests;
 public static partial class TestingUtil {
-    public static void AssertImageEqualsTokens(string path, ExpectedToken[] expectedTypes, [CallerFilePath] string callerPath = "") {
+    public static void AssertImageEqualsTokens(string path, ShorthandToken[] expectedTypes, [CallerFilePath] string callerPath = "") {
         if (expectedTypes.Last().Type != TokenType.NewLine) {
             expectedTypes = expectedTypes.Append(TokenType.NewLine).ToArray();
         }
@@ -24,7 +24,6 @@ public static partial class TestingUtil {
 
         if (errors.Any(x => x.Code.Severity >= ErrorSeverity.Warning)) {
             Assert.Fail("Tokenization failed with errors: " + string.Join("\n", errors.Select(x => x.ToString())));
-
         }
 
         if (expectedTypes.Length != tokens.Length) {
@@ -110,42 +109,46 @@ public static partial class TestingUtil {
 /// <summary>
 /// Asserts stuff
 /// </summary>
-public class ExpectedToken {
+public class ShorthandToken {
     private readonly Action<Token>? compareFunction;
+    private readonly Func<Token> toTokenFunc;
+
     public TokenType Type {
         get;
     }
 
-    public ExpectedToken(TokenType type, Rectangle position) : this((other) => {
+    public ShorthandToken(TokenType type, Rectangle position) : this((other) => {
         AssertPosition(other, position);
-    }, type) {
+    }, () => new Token(position, type), type) {
     }
 
-    public ExpectedToken(IdentifierFrame frame, Rectangle position) : this((other) => {
+    public ShorthandToken(IdentifierFrame frame, Rectangle position) : this((other) => {
         AssertPosition(other, position);
         AssertSameFrame(other, frame);
-    }, TokenType.Identifier) {
+    }, () => new IdentifierToken(frame, position)
+    , TokenType.Identifier) {
     }
 
-    private ExpectedToken(Action<Token>? compareFunction, TokenType type) {
+    private ShorthandToken(Action<Token>? compareFunction, Func<Token> toTokenFunc, TokenType type) {
         Type = type;
         this.compareFunction = compareFunction;
+        this.toTokenFunc = toTokenFunc;
     }
 
-    public static implicit operator ExpectedToken(TokenType type) {
-        return new ExpectedToken(null, type);
+    public static implicit operator ShorthandToken(TokenType type) {
+        return new ShorthandToken(null, () => new Token(Rectangle.Zero, type), type);
     }
 
-    public static implicit operator ExpectedToken(IdentifierFrame frame) {
-        return new ExpectedToken((other) => {
-            AssertSameFrame(other, frame);
-        }, TokenType.Identifier);
-    }
-
-    public static implicit operator ExpectedToken(string @string) {
-        return new ExpectedToken((other) => {
+    public static implicit operator ShorthandToken(string @string) {
+        return new ShorthandToken((other) => {
             AssertString(other, @string);
-        }, TokenType.StringLiteral);
+        }, () => new StringLiteralToken(@string, Rectangle.Zero), TokenType.StringLiteral);
+    }
+
+    public static implicit operator ShorthandToken(int @int) {
+        return new ShorthandToken((other) => {
+            AssertString(other, @int.ToString());
+        }, () => new NumberLiteralToken(@int.ToString(), Rectangle.Zero), TokenType.NumberLiteral);
     }
 
     private static void AssertSameFrame(Token token, IdentifierFrame frame) {
@@ -168,6 +171,14 @@ public class ExpectedToken {
         Assert.AreEqual(text, stringToken.Content);
     }
 
+    private static void AssertNumber(Token token, string number) {
+        if (token is not NumberLiteralToken numberLiteral) {
+            Assert.Fail("Provided token was not a number literal");
+            return;
+        }
+        Assert.AreEqual(number, numberLiteral.Content);
+    }
+
     public void AssertEquals(Token token) {
         if (token.Type != Type) {
             Assert.Fail($"Token at position {token.Position} is not the expected type.\n" +
@@ -176,5 +187,28 @@ public class ExpectedToken {
         }
 
         this.compareFunction?.Invoke(token);
+    }
+
+
+    public Token ToToken() {
+        return toTokenFunc();
+    }
+
+    public static implicit operator ShorthandToken(IdentifierFrame frame) {
+        return Identifier(frame);
+    }
+
+    public static ShorthandToken Identifier(IdentifierFrame frame) {
+        return new ShorthandToken((other) => {
+            AssertSameFrame(other, frame);
+        }, () => new IdentifierToken(frame, Rectangle.Zero), TokenType.Identifier);
+    }
+
+    public static ShorthandToken IdentifierShape(params string[] lines) {
+        return Identifier(Utils.StringToFrame(lines));
+    }
+
+    public static ShorthandToken Identifier(string @string) {
+        return Identifier(TestingUtil.StringToBinaryFrame(@string));
     }
 }

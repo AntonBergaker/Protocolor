@@ -21,7 +21,9 @@ public class NumberLiteral : Expression {
         return nl.Content == Content;
     }
 
-    public override string ToString() {
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
         return Content;
     }
 }

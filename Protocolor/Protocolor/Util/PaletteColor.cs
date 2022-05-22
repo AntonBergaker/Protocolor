@@ -1,7 +1,7 @@
 ﻿namespace Protocolor.Util;
 
 public struct PaletteColor {
-    public static PaletteColor Black = new(Palette.Black);
+    public static PaletteColor White = new(Palette.White);
     public static PaletteColor Gray = new(Palette.Gray);
     public static PaletteColor DarkRed = new(Palette.DarkRed);
     public static PaletteColor Red = new(Palette.Red);
@@ -11,7 +11,7 @@ public struct PaletteColor {
     public static PaletteColor Cyan = new(Palette.Cyan);
     public static PaletteColor Blue = new(Palette.Blue);
     public static PaletteColor Purple = new(Palette.Purple);
-    public static PaletteColor White = new(Palette.White);
+    public static PaletteColor Black = new(Palette.Black);
     public static PaletteColor LightGray = new(Palette.LightGray);
     public static PaletteColor Brown = new(Palette.Brown);
     public static PaletteColor Pink = new(Palette.Pink);
@@ -23,7 +23,7 @@ public struct PaletteColor {
     public static PaletteColor Lavender = new(Palette.Lavender);
 
     private enum Palette : byte {
-        Black,
+        White,
         Gray,
         DarkRed,
         Red,
@@ -33,7 +33,7 @@ public struct PaletteColor {
         Cyan,
         Blue,
         Purple,
-        White,
+        Black,
         LightGray,
         Brown,
         Pink,
@@ -103,7 +103,7 @@ public struct PaletteColor {
     }
 
     public override bool Equals(object? obj) {
-        return obj is RawColor other && Equals(other);
+        return obj is PaletteColor other && Equals(other);
     }
 
     public override int GetHashCode() {

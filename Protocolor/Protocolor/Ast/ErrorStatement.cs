@@ -17,7 +17,9 @@ public class ErrorStatement : Statement {
         return other is ErrorStatement;
     }
 
-    public override string ToString() {
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
         return "ERROR!!!";
     }
 }

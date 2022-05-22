@@ -32,12 +32,14 @@ public class Block : Statement {
         return true;
     }
 
-    public override string ToString() {
+    public override string ToString() => ToString(DefaultIdentifierFormatter);
+
+    public override string ToString(IdentifierFormatter identifierFormatter) {
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("{");
 
         foreach (Statement statement in Statements) {
-            sb.AppendLine("\t" + statement.ToString().Replace("\n", "\n\t"));
+            sb.AppendLine("\t" + statement.ToString(identifierFormatter).Replace("\n", "\n\t"));
         }
 
         sb.AppendLine("}");

@@ -54,6 +54,6 @@ public class Error {
     }
 
     public override string ToString() {
-        return $"Error at position {Position}:\n{Code}";
+        return $"Error at position {Position}:\n{Message}";
     }
 }
