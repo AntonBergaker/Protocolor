@@ -14,7 +14,7 @@ public class Block : Statement {
         Statements = statements.ToImmutableArray();
     }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not Block block) {
             return false;
         }

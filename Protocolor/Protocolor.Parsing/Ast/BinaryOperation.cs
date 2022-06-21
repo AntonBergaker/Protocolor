@@ -50,7 +50,7 @@ public class BinaryOperation : Expression {
         Operation = operation;
     }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not BinaryOperation bo) {
             return false;
         }

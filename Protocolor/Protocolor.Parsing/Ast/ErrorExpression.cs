@@ -8,7 +8,7 @@ using Protocolor.Util;
 namespace Protocolor.Ast;
 public class ErrorExpression : Expression {
     public ErrorExpression(Rectangle position) : base(position) { }
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         return other is ErrorExpression;
     }
 

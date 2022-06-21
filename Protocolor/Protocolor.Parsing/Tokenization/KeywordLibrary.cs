@@ -81,7 +81,7 @@ public static class KeywordLibrary {
                 "  X",
             }),
 
-            (LesserThan: TokenType.LessThan, new [] {
+            (TokenType.LessThan, new [] {
                 " X",
                 "X ",
                 " X",
@@ -93,7 +93,7 @@ public static class KeywordLibrary {
                 "X ",
             }),
 
-            (LesserOrEqualThan: TokenType.LessOrEqualThan, new [] {
+            (TokenType.LessOrEqualThan, new [] {
                 " X ",
                 "X  ",
                 " X ",
@@ -105,6 +105,13 @@ public static class KeywordLibrary {
                 "  X",
                 " X ",
                 "XXX"
+            }),
+
+            (TokenType.Loop, new [] {
+                " XXX X ",
+                " X  XXX",
+                "XXX  X ",
+                " X XXX ",
             }),
         };
 

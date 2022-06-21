@@ -7,16 +7,21 @@ public class TokenReader {
 
     private int index;
 
+    private readonly Stack<int> stateStack;
+
     public TokenReader(Token[] tokens) {
         this.tokens = tokens;
         endOfFile = new Token(tokens.LastOrDefault()?.Position ?? new Rectangle(), TokenType.EndOfFile);
+        stateStack = new Stack<int>();
     }
 
     private readonly Token endOfFile;
 
     public bool HasNext => index < tokens.Length;
 
-        public Token Peek() {
+    public Token Current => tokens[index-1];
+
+    public Token Peek() {
         int startIndex = index;
 
         Token token = Read();
@@ -60,5 +65,17 @@ public class TokenReader {
         }
 
         return tokens[index];
+    }
+
+    public void PushState() {
+        stateStack.Push(index);
+    }
+
+    public void PopState() {
+        index = stateStack.Pop();
+    }
+
+    public void PopDiscardState() {
+        stateStack.Pop();
     }
 }

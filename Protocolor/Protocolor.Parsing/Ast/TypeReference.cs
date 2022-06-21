@@ -18,7 +18,7 @@ public class TypeReference : Node {
         Generics = ImmutableArray.CreateRange(generics);
     }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not TypeReference otherTr) {
             return false;
         }

@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Protocolor\Protocolor.csproj" />
+    <ProjectReference Include="..\Protocolor.Parsing\Protocolor.Parsing.csproj" />
   </ItemGroup>
 
 </Project>

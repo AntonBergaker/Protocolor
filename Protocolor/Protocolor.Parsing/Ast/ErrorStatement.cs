@@ -13,7 +13,7 @@ namespace Protocolor.Ast;
 public class ErrorStatement : Statement {
     public ErrorStatement(Rectangle position) : base(position) { }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         return other is ErrorStatement;
     }
 

@@ -11,7 +11,7 @@ public class Assignment : Statement {
         Value = value;
     }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not Assignment assignment) {
             return false;
         }

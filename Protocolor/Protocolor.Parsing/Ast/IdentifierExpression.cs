@@ -11,7 +11,7 @@ public class IdentifierExpression : Expression {
     public IdentifierExpression(IdentifierFrame identifier, Rectangle position) : base(position) {
         Identifier = identifier;
     }
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not IdentifierExpression ie) {
             return false;
         }

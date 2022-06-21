@@ -8,7 +8,7 @@ using TT = Protocolor.Tokenization.TokenType;
 using static Protocolor.Tokenization.TokenType;
 
 namespace UnitTests.Parsing;
-class TestVariableAssignment {
+class TestVariableDeclaration {
 
     [Test]
     public void SimpleDeclaration() {

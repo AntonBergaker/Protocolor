@@ -18,7 +18,7 @@ public partial class Parser {
     private partial class ParserInstance {
         private readonly TokenReader reader;
         private bool calledRan;
-        private List<Error> errors;
+        private readonly List<Error> errors;
 
         public ParserInstance(Token[] tokens) {
             this.reader = new(tokens);
@@ -55,27 +55,26 @@ public partial class Parser {
             if (token.Type == TokenType.StartBlock) {
                 return ReadBlock(reader.Read());
             }
-            
-            
-            // Read the stuff that begins with a list of identifiers
-            List<IdentifierToken> identifiers = new();
-            while (token.Type == TokenType.Identifier) {
-                identifiers.Add((IdentifierToken)reader.Read());
-                token = reader.Peek();
-            }
 
-            if (token.Type is TokenType.ConstDeclarationL or TokenType.VarDeclarationL) {
-                return ReadVariableDeclaration(reader.Read(), identifiers);
-            }
+            { // Check if it's a variable declaration
+                reader.PushState();
+                while (reader.Read().Type == TokenType.Identifier) { }
 
-            if (token.Type is TokenType.Assignment) {
-                return ReadAssignment(reader.Read(), identifiers);
+                bool isVariableDeclaration =
+                    reader.Current.Type is TokenType.ConstDeclarationL or TokenType.VarDeclarationL;
+
+                reader.PopState();
+
+                if (isVariableDeclaration) {
+                    return ReadVariableDeclaration();
+                }
             }
 
             Expression expression = ReadExpression();
             // TODO: Check if it's a valid expression type
             return new ExpressionStatement(expression);
         }
+        
 
         private Block ReadBlock(Token openingCharacter) {
             List<Statement> statements = new();
@@ -93,7 +92,19 @@ public partial class Parser {
             return new Block(statements, statements.Select(x => x.Position).UnionAll());
         }
 
-        private Statement ReadVariableDeclaration(Token openDeclaration, List<IdentifierToken> identifierTokens) {
+        private Statement ReadVariableDeclaration() {
+            List<IdentifierToken> identifierTokens = new();
+
+            while (reader.Peek().Type == TokenType.Identifier) {
+                identifierTokens.Add((IdentifierToken)reader.Read());
+            }
+
+            Token openDeclaration = reader.Read();
+
+            if ((openDeclaration.Type is TokenType.ConstDeclarationL or TokenType.VarDeclarationL) == false) {
+                throw new Exception($"Called into {nameof(ReadVariableDeclaration)} in an invalid state");
+            }
+
             bool isConst = openDeclaration.Type == TokenType.ConstDeclarationL;
 
             Rectangle position = openDeclaration.Position;
@@ -152,10 +163,6 @@ public partial class Parser {
             return new VariableDeclaration(identifier.Frame, isConst ? VariableKind.Const : VariableKind.Var, type, initializer, position);
         }
 
-        private Statement ReadAssignment(Token assignmentToken, List<IdentifierToken> identifierTokens) {
-            return null!;
-        }
-
 
         private Expression ReadExpression() {
             return ReadBinaryBooleanOr();
@@ -192,6 +199,25 @@ public partial class Parser {
             return expression;
         }
 
+        private Expression ReadIdentifierChain() {
+            var previous = ReadLiteral();
+
+            if (previous is IdentifierExpression) {
+                var next = reader.Peek();
+
+                List<IdentifierExpression> identifiers = new();
+
+                while (next.Type == TokenType.Identifier) {
+                    identifiers.Add(ReadIdentifierLiteral(reader.Read()));
+                    next = reader.Peek();
+                }
+
+                return new IdentifierChainExpression(identifiers);
+            }
+
+            return previous;
+        }
+
         private Expression ReadLiteral() {
             return ReadLiteral(reader.Read());
         }
@@ -214,7 +240,7 @@ public partial class Parser {
             return new ErrorExpression(token.Position);
         }
 
-        private Expression ReadIdentifierLiteral(Token token) {
+        private IdentifierExpression ReadIdentifierLiteral(Token token) {
             IdentifierToken identifierToken = (IdentifierToken)token;
             return new IdentifierExpression(identifierToken.Frame, identifierToken.Position);
         }

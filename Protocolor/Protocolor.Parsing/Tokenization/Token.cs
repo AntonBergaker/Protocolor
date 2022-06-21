@@ -36,6 +36,7 @@ public enum TokenType {
     LessOrEqualThan,
     GreaterOrEqualThan,
     Dot,
+    Loop,
     StartBlock,
     EndBlock,
     EndOfFile,

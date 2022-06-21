@@ -6,24 +6,24 @@ using System.Threading.Tasks;
 using Protocolor.Util;
 
 namespace Protocolor.Ast;
-public class NumberLiteral : Expression {
+public class StringLiteral : Expression {
     public string Content { get; }
 
-    public NumberLiteral(string content, Rectangle rectangle) : base(rectangle) {
+    public StringLiteral(string content, Rectangle rectangle) : base(rectangle) {
         Content = content;
     }
 
-    public override bool Equals(Node other) {
-        if (other is not NumberLiteral nl) {
+    public override bool Equals(Node? other) {
+        if (other is not StringLiteral sl) {
             return false;
         }
 
-        return nl.Content == Content;
+        return sl.Content == Content;
     }
 
     public override string ToString() => ToString(DefaultIdentifierFormatter);
 
     public override string ToString(IdentifierFormatter identifierFormatter) {
-        return Content;
+        return $"\"{Content}\"";
     }
 }

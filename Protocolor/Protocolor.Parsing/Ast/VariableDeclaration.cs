@@ -26,7 +26,7 @@ public class VariableDeclaration : Statement {
         Type = type;
     }
 
-    public override bool Equals(Node other) {
+    public override bool Equals(Node? other) {
         if (other is not VariableDeclaration otherVD) {
             return false;
         }

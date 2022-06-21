@@ -15,7 +15,7 @@ public abstract class Node : IEquatable<Node> {
         Position = position;
     }
 
-    public abstract bool Equals(Node other);
+    public abstract bool Equals(Node? other);
 
     public override bool Equals(object? obj) {
         if (obj is not Node other) {
